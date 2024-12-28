@@ -3,7 +3,10 @@ import { Database } from 'bun:sqlite';
 import path from 'path';
 import { deleteEventSubSubscription, subscribeToStream } from './twitch';
 
-const db = new Database(path.join(import.meta.dir, '../data/subscriptions.db'));
+const db = new Database(
+  path.join(import.meta.dir, '../data/subscriptions.db'),
+  { create: true, strict: true }
+);
 
 db.run(`
   CREATE TABLE IF NOT EXISTS twitch_subscriptions (
