@@ -2,7 +2,7 @@ import { Client, TextChannel } from 'discord.js';
 import { db } from './db';
 
 const BOOK_CLUB_CHANNEL_ID = '1320549426007375994';
-const MIKE_USER_ID = '356482549549236225';
+const MIKE_USER_ID = '204799401699442689';
 const BANHAMMER_EMOJI = 'banhammer';
 const BANNED_FROM_BOOK_CLUB_ROLE_ID = '1330690625183551668';
 
