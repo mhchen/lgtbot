@@ -1,12 +1,6 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
-import { Database } from 'bun:sqlite';
-import path from 'path';
 import { deleteEventSubSubscription, subscribeToStream } from './twitch';
-
-const db = new Database(
-  path.join(import.meta.dir, '../data/subscriptions.db'),
-  { create: true, strict: true }
-);
+import { db } from './db';
 
 db.run(`
   CREATE TABLE IF NOT EXISTS twitch_subscriptions (
@@ -14,6 +8,14 @@ db.run(`
     username TEXT NOT NULL,
     twitch_subscription_id TEXT NOT NULL
   )
+`);
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS book_club_bans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_user_id TEXT NOT NULL,
+    discord_message_ids TEXT NOT NULL
+  );
 `);
 
 export enum SubscriptionCommand {

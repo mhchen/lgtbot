@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
+import { Client, GatewayIntentBits, Partials, PermissionFlagsBits } from 'discord.js';
 import pc from 'picocolors';
 import {
   handleListSubscriptions,
@@ -8,9 +8,15 @@ import {
   SubscriptionCommand,
 } from './commands';
 import { startWebhookServer } from './monitor';
+import { registerBookClubBansListeners } from './book-club-bans';
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildMessages,
+  ],
+  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 const NOTIFICATION_CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID!;
@@ -18,6 +24,7 @@ const NOTIFICATION_CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID!;
 client.once('ready', async () => {
   console.log('Bot is ready!');
   await registerCommands();
+  registerBookClubBansListeners(client);
   startWebhookServer({ client, channelId: NOTIFICATION_CHANNEL_ID });
 });
 
