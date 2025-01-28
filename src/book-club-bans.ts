@@ -1,10 +1,13 @@
 import {
+  AttachmentBuilder,
   Client,
   SlashCommandBuilder,
   TextChannel,
   type Interaction,
 } from 'discord.js';
 import { db } from './db';
+import { readFileSync } from 'fs';
+import path from 'path';
 
 const BOOK_CLUB_CHANNEL_ID = '1320549426007375994';
 const MIKE_USER_ID = '356482549549236225';
@@ -114,11 +117,15 @@ export async function registerBookClubBansListeners(client: Client) {
         });
 
         const banCount = newMessageIds.length;
-        await bookClubChannel.send(
-          `<@${messageSenderId}> has received their ${banCount}${getSuffix(
+        await bookClubChannel.send({
+          content: `<@${messageSenderId}> has received their ${banCount}${getSuffix(
             banCount
-          )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`
-        );
+          )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`,
+          files:
+            banCount === 10
+              ? [new AttachmentBuilder(path.join(__dirname, '10-bans.png'))]
+              : undefined,
+        });
       } else {
         db.query(
           'INSERT INTO book_club_bans (discord_user_id, discord_message_ids) VALUES ($messageSenderId, $messageIds)'
@@ -201,8 +208,7 @@ export async function registerBookClubBansListeners(client: Client) {
 
         const remainingBans = newMessageIds.length;
         await bookClubChannel.send(
-          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${
-            remainingBans !== 1 ? 's' : ''
+          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${remainingBans !== 1 ? 's' : ''
           } remaining.`
         );
       }
