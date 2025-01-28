@@ -1,4 +1,9 @@
-import { Client, TextChannel } from 'discord.js';
+import {
+  Client,
+  SlashCommandBuilder,
+  TextChannel,
+  type Interaction,
+} from 'discord.js';
 import { db } from './db';
 
 const BOOK_CLUB_CHANNEL_ID = '1320549426007375994';
@@ -18,6 +23,47 @@ const MIKE_TITLES = [
 
 function getRandomMikeTitle(): string {
   return MIKE_TITLES[Math.floor(Math.random() * MIKE_TITLES.length)];
+}
+
+const bookclubCommand = new SlashCommandBuilder()
+  .setName('bookclub')
+  .setDescription('Book club management commands')
+  .addSubcommand((subcommand) =>
+    subcommand
+      .setName('bans')
+      .setDescription('Display the book club ban leaderboard')
+  );
+
+export async function handleBookclubCommand(interaction: Interaction) {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== 'bookclub') return;
+
+  if (interaction.options.getSubcommand() === 'bans') {
+    const bans = db
+      .query(
+        `
+        SELECT 
+          discord_user_id,
+          discord_message_ids
+        FROM book_club_bans
+        ORDER BY length(discord_message_ids) - length(replace(discord_message_ids, ',', '')) + 1 DESC
+      `
+      )
+      .all() as { discord_user_id: string; discord_message_ids: string }[];
+
+    if (bans.length === 0) {
+      await interaction.reply('No one has been banned from book club yet! 📚');
+      return;
+    }
+
+    const leaderboard = bans.map((ban, index) => {
+      const banCount = ban.discord_message_ids.split(',').length;
+      return `${index + 1}. <@${ban.discord_user_id}> — ${banCount} ban${banCount !== 1 ? 's' : ''}`;
+    });
+
+    const message = `# Book club ban leaderboard\n${leaderboard.join('\n')}`;
+    await interaction.reply(message);
+  }
 }
 
 export async function registerBookClubBansListeners(client: Client) {
@@ -166,6 +212,10 @@ export async function registerBookClubBansListeners(client: Client) {
       );
     }
   });
+
+  client.on('interactionCreate', handleBookclubCommand);
+
+  await client.application?.commands.create(bookclubCommand);
 
   console.log('Book club bans listeners registered');
 }

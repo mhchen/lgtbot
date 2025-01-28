@@ -1,4 +1,9 @@
-import { Client, GatewayIntentBits, Partials, PermissionFlagsBits } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  Partials,
+  PermissionFlagsBits,
+} from 'discord.js';
 import pc from 'picocolors';
 import {
   handleListSubscriptions,
