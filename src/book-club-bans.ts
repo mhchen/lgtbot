@@ -11,6 +11,7 @@ import path from 'path';
 
 const BOOK_CLUB_CHANNEL_ID = '1320549426007375994';
 const MIKE_USER_ID = '356482549549236225';
+const RYAN_USER_ID = '219283881390637056'
 const BANHAMMER_EMOJI = 'banhammer';
 const BANNED_FROM_BOOK_CLUB_ROLE_ID = '1330690625183551668';
 
@@ -24,8 +25,22 @@ const MIKE_TITLES = [
   'Distinguished Leader',
 ];
 
+const RYAN_TITLES = [
+  'Assistant to Supreme Ruler Mike',
+  'Assistant to Grand Overlord Mike',
+  'Assistant to Executive Bookmaster Mike',
+  'Assistant to Literary Sovereign Mike',
+  'Assistant to Chief Reading Officer Mike',
+  'Assistant to Book Emperor Mike',
+  'Assistant to Distinguished Leader Mike',
+];
+
 function getRandomMikeTitle(): string {
   return MIKE_TITLES[Math.floor(Math.random() * MIKE_TITLES.length)];
+}
+
+function getRandomRyanTitle(): string {
+  return RYAN_TITLES[Math.floor(Math.random() * RYAN_TITLES.length)];
 }
 
 const bookclubCommand = new SlashCommandBuilder()
@@ -73,7 +88,7 @@ export async function registerBookClubBansListeners(client: Client) {
   client.on('messageReactionAdd', async (reaction, user) => {
     if (
       reaction.message.channel.id === BOOK_CLUB_CHANNEL_ID &&
-      user.id === MIKE_USER_ID &&
+      user.id === MIKE_USER_ID || user.id === RYAN_USER_ID &&
       reaction.emoji.name === BANHAMMER_EMOJI
     ) {
       let { message } = reaction;
