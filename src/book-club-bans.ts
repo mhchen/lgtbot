@@ -26,13 +26,13 @@ const MIKE_TITLES = [
 ];
 
 const RYAN_TITLES = [
-  'Assistant to Supreme Ruler',
-  'Assistant to Grand Overlord',
-  'Assistant to Executive Bookmaster',
-  'Assistant to Literary Sovereign',
-  'Assistant to Chief Reading Officer',
-  'Assistant to Book Emperor',
-  'Assistant to Distinguished Leader',
+  'Ryan, Assistant to Supreme Ruler',
+  'Ryan, Assistant to Grand Overlord',
+  'Ryan, Assistant to Executive Bookmaster',
+  'Ryan, Assistant to Literary Sovereign',
+  'Ryan, Assistant to Chief Reading Officer',
+  'Ryan, Assistant to Book Emperor',
+  'Ryan, Assistant to Distinguished Leader',
 ];
 
 function getRandomMikeTitle(): string {
@@ -142,7 +142,7 @@ export async function registerBookClubBansListeners(client: Client) {
               ? getRandomMikeTitle()
               : getRandomRyanTitle()
           } ${
-            user.id === MIKE_USER_ID ? 'Mike' : 'Ryan'
+            user.id === MIKE_USER_ID ? ', Mike' : ', Mike'
           }. Their crimes against literature continue to stack.`,
           files:
             banCount === 10
@@ -162,7 +162,7 @@ export async function registerBookClubBansListeners(client: Client) {
             user.id === MIKE_USER_ID
               ? getRandomMikeTitle()
               : getRandomRyanTitle()
-          } ${user.id === MIKE_USER_ID ? 'Mike' : 'Ryan'}`
+          } ${user.id === MIKE_USER_ID ? ', Mike' : ', Mike'}`
         );
       }
 
@@ -227,7 +227,7 @@ export async function registerBookClubBansListeners(client: Client) {
             user.id === MIKE_USER_ID
               ? getRandomMikeTitle()
               : getRandomRyanTitle()
-          } ${user.id === MIKE_USER_ID ? 'Mike' : 'Ryan'}'s good graces.`
+          } ${user.id === MIKE_USER_ID ? ', Mike' : ', Mike'}'s good graces.`
         );
       } else {
         db.query(
