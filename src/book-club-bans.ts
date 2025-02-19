@@ -72,7 +72,7 @@ export async function handleBookclubCommand(interaction: Interaction) {
 export async function registerBookClubBansListeners(client: Client) {
   client.on('messageReactionAdd', async (reaction, user) => {
     if (
-      reaction.message.channel.id === BOOK_CLUB_CHANNEL_ID &&
+      // reaction.message.channel.id === BOOK_CLUB_CHANNEL_ID &&
       user.id === MIKE_USER_ID &&
       reaction.emoji.name === BANHAMMER_EMOJI
     ) {
@@ -146,7 +146,7 @@ export async function registerBookClubBansListeners(client: Client) {
   });
   client.on('messageReactionRemove', async (reaction, user) => {
     if (
-      reaction.message.channel.id === BOOK_CLUB_CHANNEL_ID &&
+      // reaction.message.channel.id === BOOK_CLUB_CHANNEL_ID &&
       user.id === MIKE_USER_ID &&
       reaction.emoji.name === BANHAMMER_EMOJI
     ) {
@@ -208,7 +208,8 @@ export async function registerBookClubBansListeners(client: Client) {
 
         const remainingBans = newMessageIds.length;
         await bookClubChannel.send(
-          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${remainingBans !== 1 ? 's' : ''
+          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${
+            remainingBans !== 1 ? 's' : ''
           } remaining.`
         );
       }
