@@ -14,6 +14,60 @@ const MIKE_USER_ID = '356482549549236225';
 const BANHAMMER_EMOJI = 'banhammer';
 const BANNED_FROM_BOOK_CLUB_ROLE_ID = '1330690625183551668';
 
+const achievementsMap = new Map<number, { title: string; subtitle: string }>([
+  [
+    10,
+    {
+      title: 'The Grasshopper',
+      subtitle:
+        'Still mastering the ancient art of getting ejected from LGT Book Club',
+    },
+  ],
+  [
+    20,
+    {
+      title: 'The Enthusiast',
+      subtitle: 'Collects bans like others collect server emotes',
+    },
+  ],
+  [
+    30,
+    {
+      title: 'The Connoisseur',
+      subtitle: 'Has sampled every possible reason for being banned',
+    },
+  ],
+  [
+    40,
+    {
+      title: 'The Inevitable',
+      subtitle: 'Like death and taxes, their bans are a certainty',
+    },
+  ],
+  [
+    50,
+    {
+      title: 'The Legend',
+      subtitle: 'Their ban history is now required reading for new members',
+    },
+  ],
+  [
+    69,
+    {
+      title: 'Nice',
+      subtitle: 'Nice',
+    },
+  ],
+  [
+    100,
+    {
+      title: 'The Immortal',
+      subtitle:
+        'Somehow still part of the server despite breaking every rule in existence',
+    },
+  ],
+]);
+
 const MIKE_TITLES = [
   'Supreme Ruler',
   'Grand Overlord',
@@ -61,7 +115,8 @@ export async function handleBookclubCommand(interaction: Interaction) {
 
     const leaderboard = bans.map((ban, index) => {
       const banCount = ban.discord_message_ids.split(',').length;
-      return `${index + 1}. <@${ban.discord_user_id}> — ${banCount} ban${banCount !== 1 ? 's' : ''}`;
+      return `${index + 1}. <@${ban.discord_user_id}> — ${banCount} ban${banCount !== 1 ? 's' : ''
+        }`;
     });
 
     const message = `# Book club ban leaderboard\n${leaderboard.join('\n')}`;
@@ -117,14 +172,24 @@ export async function registerBookClubBansListeners(client: Client) {
         });
 
         const banCount = newMessageIds.length;
+        let messageContent = `<@${messageSenderId}> has received their ${banCount}${getSuffix(
+          banCount
+        )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`;
+
+        const achievement = achievementsMap.get(banCount);
+        if (achievement) {
+          messageContent += `\n\n🏆 **Achievement unlocked:** “${achievement.title}”\n*${achievement.subtitle}*`;
+        }
+
         await bookClubChannel.send({
-          content: `<@${messageSenderId}> has received their ${banCount}${getSuffix(
-            banCount
-          )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`,
-          files:
-            banCount === 10
-              ? [new AttachmentBuilder(path.join(__dirname, '10-bans.png'))]
-              : undefined,
+          content: messageContent,
+          files: achievement
+            ? [
+              new AttachmentBuilder(
+                path.join(__dirname, 'cheevos', `${banCount}-bans.png`)
+              ),
+            ]
+            : undefined,
         });
       } else {
         db.query(
@@ -208,8 +273,7 @@ export async function registerBookClubBansListeners(client: Client) {
 
         const remainingBans = newMessageIds.length;
         await bookClubChannel.send(
-          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${
-            remainingBans !== 1 ? 's' : ''
+          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${remainingBans !== 1 ? 's' : ''
           } remaining.`
         );
       }
