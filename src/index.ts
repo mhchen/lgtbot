@@ -14,6 +14,7 @@ import {
 } from './commands';
 import { startWebhookServer } from './monitor';
 import { registerBookClubBansListeners } from './book-club-bans';
+import { handleRoastMe } from './roastme';
 
 const client = new Client({
   intents: [
@@ -38,6 +39,28 @@ client.on('interactionCreate', (interaction) =>
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
+
+    // Check if this is the roastme command - it doesn't require mod permissions
+    if (commandName === SubscriptionCommand.RoastMe) {
+      console.log(
+        'Command received:',
+        pc.yellowBright(commandName),
+        'from user:',
+        pc.cyanBright(interaction.user.tag)
+      );
+
+      const roast = await handleRoastMe(interaction);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: roast,
+        });
+      } else {
+        await interaction.editReply({
+          content: roast,
+        });
+      }
+      return;
+    }
 
     if (
       !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)

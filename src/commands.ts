@@ -22,6 +22,7 @@ export enum SubscriptionCommand {
   TwitchSubscribe = 'twitch-subscribe',
   TwitchUnsubscribe = 'twitch-unsubscribe',
   TwitchListSubscriptions = 'twitch-list-subscriptions',
+  RoastMe = 'roastme',
 }
 
 interface Subscription {
@@ -83,6 +84,9 @@ export async function registerCommands() {
     new SlashCommandBuilder()
       .setName(SubscriptionCommand.TwitchListSubscriptions)
       .setDescription('List all Twitch channel subscriptions'),
+    new SlashCommandBuilder()
+      .setName(SubscriptionCommand.RoastMe)
+      .setDescription('Get roasted based on your recent messages'),
   ];
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
