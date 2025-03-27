@@ -14,6 +14,7 @@ import {
 } from './commands';
 import { startWebhookServer } from './monitor';
 import { registerBookClubBansListeners } from './book-club-bans';
+import { registerNoelRepliesListeners } from './noel-replies';
 
 const client = new Client({
   intents: [
@@ -30,6 +31,7 @@ client.once('ready', async () => {
   console.log('Bot is ready!');
   await registerCommands();
   registerBookClubBansListeners(client);
+  registerNoelRepliesListeners(client);
   startWebhookServer({ client, channelId: NOTIFICATION_CHANNEL_ID });
 });
 
