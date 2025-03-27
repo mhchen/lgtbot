@@ -15,7 +15,14 @@ function getEasternTime(): string {
 
 export async function registerNoelRepliesListeners(client: Client) {
   client.on('messageCreate', async (message) => {
-    if (message.channelId === WATERCOOLER_CHANNEL_ID && !message.author.bot) {
+    if (
+      message.channelId === WATERCOOLER_CHANNEL_ID &&
+      message.author.id === NOEL_USER_ID
+    ) {
+      if (Math.random() >= 0.04) {
+        return;
+      }
+
       const watercoolerChannel = (await client.channels.fetch(
         WATERCOOLER_CHANNEL_ID
       )) as TextChannel;
