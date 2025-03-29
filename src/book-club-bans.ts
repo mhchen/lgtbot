@@ -88,7 +88,7 @@ const bookclubCommand = new SlashCommandBuilder()
   .addSubcommand((subcommand) =>
     subcommand
       .setName('bans')
-      .setDescription('Display the book club ban leaderboard')
+      .setDescription('Display the book club ban leaderboard'),
   );
 
 export async function handleBookclubCommand(interaction: Interaction) {
@@ -104,7 +104,7 @@ export async function handleBookclubCommand(interaction: Interaction) {
           discord_message_ids
         FROM book_club_bans
         ORDER BY length(discord_message_ids) - length(replace(discord_message_ids, ',', '')) + 1 DESC
-      `
+      `,
       )
       .all() as { discord_user_id: string; discord_message_ids: string }[];
 
@@ -123,16 +123,18 @@ export async function handleBookclubCommand(interaction: Interaction) {
     const guildMembers = interaction.guild.members.cache;
     const membersMap = new Map<string, string>();
 
-    guildMembers.forEach((member => 
-      membersMap.set(member.id, member.user.displayName)
-    ));
+    guildMembers.forEach((member) =>
+      membersMap.set(member.id, member.user.displayName),
+    );
 
-    const leaderboard = bans.filter((ban) => membersMap.has(ban.discord_user_id)).map((ban, index) => {
-      const banCount = ban.discord_message_ids.split(',').length;
-      const userDisplayName = membersMap.get(ban.discord_user_id);
+    const leaderboard = bans
+      .filter((ban) => membersMap.has(ban.discord_user_id))
+      .map((ban, index) => {
+        const banCount = ban.discord_message_ids.split(',').length;
+        const userDisplayName = membersMap.get(ban.discord_user_id);
 
-      return `${index + 1}. ${userDisplayName} — ${banCount} ban${banCount !== 1 ? 's' : ''}`;      
-    });
+        return `${index + 1}. ${userDisplayName} — ${banCount} ban${banCount !== 1 ? 's' : ''}`;
+      });
 
     const message = `# Book club ban leaderboard\n${leaderboard.join('\n')}`;
     await interaction.reply(message);
@@ -160,14 +162,14 @@ export async function registerBookClubBansListeners(client: Client) {
 
       const existingBan = db
         .query(
-          'SELECT discord_message_ids FROM book_club_bans WHERE discord_user_id = $messageSenderId'
+          'SELECT discord_message_ids FROM book_club_bans WHERE discord_user_id = $messageSenderId',
         )
         .get({
           messageSenderId: messageSenderId,
         }) as { discord_message_ids: string } | undefined;
 
       const bookClubChannel = (await client.channels.fetch(
-        BOOK_CLUB_CHANNEL_ID
+        BOOK_CLUB_CHANNEL_ID,
       )) as TextChannel;
 
       const { guild } = bookClubChannel;
@@ -180,7 +182,7 @@ export async function registerBookClubBansListeners(client: Client) {
           messageId,
         ];
         db.query(
-          'UPDATE book_club_bans SET discord_message_ids = $messageIds WHERE discord_user_id = $messageSenderId'
+          'UPDATE book_club_bans SET discord_message_ids = $messageIds WHERE discord_user_id = $messageSenderId',
         ).run({
           messageIds: newMessageIds.join(','),
           messageSenderId: messageSenderId,
@@ -188,7 +190,7 @@ export async function registerBookClubBansListeners(client: Client) {
 
         const banCount = newMessageIds.length;
         let messageContent = `<@${messageSenderId}> has received their ${banCount}${getSuffix(
-          banCount
+          banCount,
         )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`;
 
         const achievement = achievementsMap.get(banCount);
@@ -200,27 +202,27 @@ export async function registerBookClubBansListeners(client: Client) {
           content: messageContent,
           files: achievement
             ? [
-              new AttachmentBuilder(
-                path.join(__dirname, 'cheevos', `${banCount}-bans.png`)
-              ),
-            ]
+                new AttachmentBuilder(
+                  path.join(__dirname, 'cheevos', `${banCount}-bans.png`),
+                ),
+              ]
             : undefined,
         });
       } else {
         db.query(
-          'INSERT INTO book_club_bans (discord_user_id, discord_message_ids) VALUES ($messageSenderId, $messageIds)'
+          'INSERT INTO book_club_bans (discord_user_id, discord_message_ids) VALUES ($messageSenderId, $messageIds)',
         ).run({
           messageSenderId: messageSenderId,
           messageIds: messageId,
         });
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomMikeTitle()} Mike`
+          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomMikeTitle()} Mike`,
         );
       }
 
       console.log(
-        `User ${messageSenderId} has been banned for message ${messageId}.`
+        `User ${messageSenderId} has been banned for message ${messageId}.`,
       );
     }
   });
@@ -243,7 +245,7 @@ export async function registerBookClubBansListeners(client: Client) {
 
       const existingBan = db
         .query(
-          'SELECT discord_message_ids FROM book_club_bans WHERE discord_user_id = $messageSenderId'
+          'SELECT discord_message_ids FROM book_club_bans WHERE discord_user_id = $messageSenderId',
         )
         .get({
           messageSenderId: messageSenderId,
@@ -259,7 +261,7 @@ export async function registerBookClubBansListeners(client: Client) {
       }
 
       const bookClubChannel = (await client.channels.fetch(
-        BOOK_CLUB_CHANNEL_ID
+        BOOK_CLUB_CHANNEL_ID,
       )) as TextChannel;
 
       const newMessageIds = messageIds.filter((id) => id !== messageId);
@@ -270,17 +272,17 @@ export async function registerBookClubBansListeners(client: Client) {
         await member.roles.remove(BANNED_FROM_BOOK_CLUB_ROLE_ID);
 
         db.query(
-          'DELETE FROM book_club_bans WHERE discord_user_id = $messageSenderId'
+          'DELETE FROM book_club_bans WHERE discord_user_id = $messageSenderId',
         ).run({
           messageSenderId: messageSenderId,
         });
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been brought back into ${getRandomMikeTitle()} Mike's good graces.`
+          `<@${messageSenderId}> has been brought back into ${getRandomMikeTitle()} Mike's good graces.`,
         );
       } else {
         db.query(
-          'UPDATE book_club_bans SET discord_message_ids = $messageIds WHERE discord_user_id = $messageSenderId'
+          'UPDATE book_club_bans SET discord_message_ids = $messageIds WHERE discord_user_id = $messageSenderId',
         ).run({
           messageIds: newMessageIds.join(','),
           messageSenderId: messageSenderId,
@@ -288,13 +290,14 @@ export async function registerBookClubBansListeners(client: Client) {
 
         const remainingBans = newMessageIds.length;
         await bookClubChannel.send(
-          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${remainingBans !== 1 ? 's' : ''
-          } remaining.`
+          `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${
+            remainingBans !== 1 ? 's' : ''
+          } remaining.`,
         );
       }
 
       console.log(
-        `Ban removed for user ${messageSenderId}, message ${messageId}. Remaining bans: ${newMessageIds.length}`
+        `Ban removed for user ${messageSenderId}, message ${messageId}. Remaining bans: ${newMessageIds.length}`,
       );
     }
   });
