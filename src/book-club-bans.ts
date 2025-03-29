@@ -127,13 +127,10 @@ export async function handleBookclubCommand(interaction: Interaction) {
       membersMap.set(member.id, member.user.displayName)
     ));
 
-    const leaderboard = bans.map((ban, index) => {
+    const leaderboard = bans.filter((ban) => membersMap.has(ban.discord_user_id)).map((ban, index) => {
       const banCount = ban.discord_message_ids.split(',').length;
       const userDisplayName = membersMap.get(ban.discord_user_id);
 
-      if (userDisplayName == undefined) {
-        return;
-      }
       return `${index + 1}. ${userDisplayName} — ${banCount} ban${banCount !== 1 ? 's' : ''}`;      
     });
 
