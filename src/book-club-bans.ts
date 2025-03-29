@@ -113,10 +113,28 @@ export async function handleBookclubCommand(interaction: Interaction) {
       return;
     }
 
+    if (interaction.guild === null) {
+      await interaction.reply('Guild is null :s!');
+      return;
+    }
+
+    await interaction.guild.members.fetch();
+
+    const guildMembers = interaction.guild.members.cache;
+    const membersMap = new Map<string, string>();
+
+    guildMembers.forEach((member => 
+      membersMap.set(member.id, member.user.displayName)
+    ));
+
     const leaderboard = bans.map((ban, index) => {
       const banCount = ban.discord_message_ids.split(',').length;
-      return `${index + 1}. <@${ban.discord_user_id}> — ${banCount} ban${banCount !== 1 ? 's' : ''
-        }`;
+      const userDisplayName = membersMap.get(ban.discord_user_id);
+
+      if (userDisplayName == undefined) {
+        return;
+      }
+      return `${index + 1}. ${userDisplayName} — ${banCount} ban${banCount !== 1 ? 's' : ''}`;      
     });
 
     const message = `# Book club ban leaderboard\n${leaderboard.join('\n')}`;
