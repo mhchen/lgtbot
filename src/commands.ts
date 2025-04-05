@@ -1,22 +1,8 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { deleteEventSubSubscription, subscribeToStream } from './twitch';
-import { db } from './db';
-
-db.run(`
-  CREATE TABLE IF NOT EXISTS twitch_subscriptions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL,
-    twitch_subscription_id TEXT NOT NULL
-  )
-`);
-
-db.run(`
-  CREATE TABLE IF NOT EXISTS book_club_bans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    discord_user_id TEXT NOT NULL,
-    discord_message_ids TEXT NOT NULL
-  );
-`);
+import { db } from './db/index';
+import { twitchSubscriptions } from './db/schema';
+import { eq } from 'drizzle-orm';
 
 export enum SubscriptionCommand {
   TwitchSubscribe = 'twitch-subscribe',
@@ -24,23 +10,16 @@ export enum SubscriptionCommand {
   TwitchListSubscriptions = 'twitch-list-subscriptions',
 }
 
-interface Subscription {
-  username: string;
-  twitch_subscription_id: string;
-}
-
-export function loadSubscriptions(): Subscription[] {
-  return db
-    .query('SELECT username, twitch_subscription_id FROM twitch_subscriptions')
-    .all() as Subscription[];
+export function loadSubscriptions() {
+  return db.select().from(twitchSubscriptions).all();
 }
 
 export function loadSubscription({ username }: { username: string }) {
   return db
-    .query(
-      'SELECT username, twitch_subscription_id FROM twitch_subscriptions WHERE username = ?'
-    )
-    .get(username) as Subscription;
+    .select()
+    .from(twitchSubscriptions)
+    .where(eq(twitchSubscriptions.username, username))
+    .get();
 }
 
 function saveSubscription({
@@ -50,14 +29,18 @@ function saveSubscription({
   username: string;
   twitchSubscriptionId: string;
 }) {
-  db.run(
-    'INSERT INTO twitch_subscriptions (username, twitch_subscription_id) VALUES (?, ?)',
-    [username, twitchSubscriptionId]
-  );
+  db.insert(twitchSubscriptions)
+    .values({
+      username,
+      twitchSubscriptionId,
+    })
+    .run();
 }
 
 function deleteSubscription({ username }: { username: string }) {
-  db.run('DELETE FROM twitch_subscriptions WHERE username = ?', [username]);
+  db.delete(twitchSubscriptions)
+    .where(eq(twitchSubscriptions.username, username))
+    .run();
 }
 
 export async function registerCommands() {
@@ -116,7 +99,7 @@ export async function handleUnsubscribe({ username }: { username: string }) {
     return `Not subscribed to **${username}**`;
   }
 
-  await deleteEventSubSubscription(subscription.twitch_subscription_id);
+  await deleteEventSubSubscription(subscription.twitchSubscriptionId);
   deleteSubscription({ username });
   return `Successfully unsubscribed from **${username}**`;
 }

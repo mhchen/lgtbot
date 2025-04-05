@@ -1,17 +1,27 @@
 {
-  "name": "streamy",
+  "name": "lgtbot",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:check": "drizzle-kit check",
+    "db:up": "drizzle-kit up",
+    "db:studio": "drizzle-kit studio"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.30.6"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.2",
     "@types/express": "^5.0.0",
     "axios": "^1.7.9",
     "discord.js": "^14.16.3",
+    "drizzle-orm": "^0.41.0",
     "express": "^4.21.2",
     "picocolors": "^1.1.1"
   }
