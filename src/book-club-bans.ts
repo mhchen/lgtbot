@@ -166,9 +166,6 @@ export async function registerBookClubBansListeners(client: Client) {
         BOOK_CLUB_CHANNEL_ID
       )) as TextChannel;
 
-      const { guild } = bookClubChannel;
-      const member = await guild.members.fetch(messageSenderId);
-
       if (existingBan) {
         const newMessageIds = [
           ...existingBan.discordMessageIds.split(','),
