@@ -33,7 +33,7 @@ export function startWebhookServer({
   const app = express();
   app.use(
     express.json({
-      verify: (req: any, _, buf) => {
+      verify: (req: Request, _, buf: Buffer) => {
         req.rawBody = buf;
       },
     })
