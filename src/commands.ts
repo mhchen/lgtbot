@@ -3,6 +3,7 @@ import { deleteEventSubSubscription, subscribeToStream } from './twitch';
 import { db } from './db/index';
 import { twitchSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
+import { kudosCommands } from './kudos';
 
 export enum SubscriptionCommand {
   TwitchSubscribe = 'twitch-subscribe',
@@ -66,6 +67,7 @@ export async function registerCommands() {
     new SlashCommandBuilder()
       .setName(SubscriptionCommand.TwitchListSubscriptions)
       .setDescription('List all Twitch channel subscriptions'),
+    ...kudosCommands,
   ];
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);

@@ -15,6 +15,14 @@ import {
 import { startWebhookServer } from './monitor';
 import { registerBookClubBansListeners } from './book-club-bans';
 import { registerNoelRepliesListeners } from './noel-replies';
+import {
+  handleLeaderboardCommand,
+  handleProgressCommand,
+  handleRankCommand,
+  handleTopCommand,
+  KudosCommand,
+  registerKudosListeners,
+} from './kudos';
 
 const client = new Client({
   intents: [
@@ -26,14 +34,16 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
-const NOTIFICATION_CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID!;
-
 client.once('ready', async () => {
   console.log('Bot is ready!');
   await registerCommands();
   registerBookClubBansListeners(client);
   registerNoelRepliesListeners(client);
-  startWebhookServer({ client, channelId: NOTIFICATION_CHANNEL_ID });
+  registerKudosListeners(client);
+  startWebhookServer({
+    client,
+    channelId: process.env.NOTIFICATION_CHANNEL_ID!,
+  });
 });
 
 client.on('interactionCreate', (interaction) =>
@@ -41,6 +51,37 @@ client.on('interactionCreate', (interaction) =>
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
+
+    switch (commandName) {
+      case KudosCommand.Rank: {
+        const targetUser = interaction.options.getUser('user');
+        const response = await handleRankCommand({
+          userId: interaction.user.id,
+          targetUserId: targetUser?.id,
+        });
+        await interaction.reply(response);
+        return;
+      }
+      case KudosCommand.Leaderboard: {
+        const response = await handleLeaderboardCommand();
+        await interaction.reply(response);
+        return;
+      }
+      case KudosCommand.Progress: {
+        const response = await handleProgressCommand({
+          userId: interaction.user.id,
+        });
+        await interaction.reply(response);
+        return;
+      }
+      case KudosCommand.Top: {
+        const timeframe =
+          interaction.options.getString('timeframe') ?? '7 days';
+        const response = await handleTopCommand({ timeframe });
+        await interaction.reply(response);
+        return;
+      }
+    }
 
     if (
       !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)
@@ -51,6 +92,7 @@ client.on('interactionCreate', (interaction) =>
       });
       return;
     }
+
     console.log(
       'Command received:',
       pc.yellowBright(commandName),

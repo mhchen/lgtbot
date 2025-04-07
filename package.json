@@ -8,6 +8,7 @@
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
     "db:studio": "drizzle-kit studio",
+    "dev": "bun run src/index.ts",
     "lint": "eslint . --ext .ts,.tsx && prettier --check .",
     "lint:fix": "eslint . --ext .ts,.tsx --fix && prettier --write .",
     "typecheck": "tsc --noEmit"
@@ -30,6 +31,7 @@
     "@libsql/client": "^0.15.2",
     "@types/express": "^5.0.0",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "discord.js": "^14.16.3",
     "drizzle-orm": "^0.41.0",
     "express": "^4.21.2",

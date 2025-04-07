@@ -24,6 +24,21 @@ if (process.env.NODE_ENV === 'test') {
       username TEXT NOT NULL,
       twitch_subscription_id TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS lgt_kudos_reactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      message_id TEXT NOT NULL,
+      message_channel_id TEXT NOT NULL,
+      message_author_id TEXT NOT NULL,
+      reactor_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+      UNIQUE(message_id, reactor_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS message_author_idx ON lgt_kudos_reactions(message_author_id);
+    CREATE INDEX IF NOT EXISTS reactor_idx ON lgt_kudos_reactions(reactor_id);
+    CREATE INDEX IF NOT EXISTS message_idx ON lgt_kudos_reactions(message_id);
+    CREATE INDEX IF NOT EXISTS reactor_author_time_idx ON lgt_kudos_reactions(reactor_id, message_author_id, created_at);
   `);
 }
 
