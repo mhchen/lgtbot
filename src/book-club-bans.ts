@@ -126,7 +126,7 @@ export async function handleBookclubCommand(interaction: Interaction) {
     const membersMap = new Map<string, string>();
 
     guildMembers.forEach((member) =>
-      membersMap.set(member.id, member.user.displayName)
+      membersMap.set(member.id, member.displayName)
     );
 
     const leaderboard = bans
@@ -284,8 +284,6 @@ export async function registerBookClubBansListeners(client: Client) {
       );
     }
   });
-
-  client.on('interactionCreate', handleBookclubCommand);
 
   console.log('Book club bans listeners registered');
 }

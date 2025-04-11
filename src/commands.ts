@@ -3,12 +3,10 @@ import { getKudosCommands } from './kudos';
 import { getBookClubCommands } from './book-club-bans';
 import { getTwitchCommands } from './twitch';
 
-// Main LGT command builder
 const lgtCommand = new SlashCommandBuilder()
   .setName('lgt')
   .setDescription('LGT Bot commands');
 
-// Add all module subcommands
 const commands = [
   lgtCommand
     .addSubcommandGroup(getKudosCommands())

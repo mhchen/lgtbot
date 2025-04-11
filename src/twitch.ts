@@ -1,23 +1,12 @@
 import axios from 'axios';
-import { SlashCommandSubcommandGroupBuilder } from 'discord.js';
+import {
+  SlashCommandSubcommandGroupBuilder,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { db } from './db/index';
 import { twitchSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
-
-interface EventSubSubscription {
-  id: string;
-  status: string;
-  type: string;
-  version: string;
-  condition: {
-    broadcaster_user_id: string;
-  };
-  transport: {
-    method: string;
-    callback: string;
-  };
-  created_at: string;
-}
+import pc from 'picocolors';
 
 interface TwitchStreamInfo {
   game_name: string;
@@ -97,23 +86,8 @@ async function subscribeToStream({
   return response.data.data[0].id;
 }
 
-async function listEventSubSubscriptions(): Promise<EventSubSubscription[]> {
-  const token = await getAccessToken();
-
-  const response = await axios.get(
-    'https://api.twitch.tv/helix/eventsub/subscriptions',
-    {
-      headers: {
-        'Client-ID': clientId,
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  return response.data.data;
-}
-
-async function getStreamInfo({
+// API functions
+export async function getStreamInfo({
   userId,
 }: {
   userId: string;
@@ -138,7 +112,7 @@ async function getStreamInfo({
   };
 }
 
-async function getUserInfo({
+export async function getUserInfo({
   userId,
 }: {
   userId: string;
@@ -175,7 +149,6 @@ async function deleteEventSubSubscription(subscriptionId: string) {
   );
 }
 
-// Command builder
 export function getTwitchCommands() {
   return (group: SlashCommandSubcommandGroupBuilder) =>
     group
@@ -245,7 +218,41 @@ function deleteSubscription({ username }: { username: string }) {
 }
 
 // Command handlers
-export async function handleSubscribe({ username }: { username: string }) {
+export async function handleCommand(interaction: ChatInputCommandInteraction) {
+  const subcommand = interaction.options.getSubcommand();
+
+  console.log(
+    'Twitch command received:',
+    pc.yellowBright(subcommand),
+    'with username:',
+    pc.cyanBright(interaction.options.getString('username')!)
+  );
+
+  switch (subcommand) {
+    case 'subscribe': {
+      const message = await handleSubscribe({
+        username: interaction.options.getString('username')!,
+      });
+      await interaction.reply({ content: message });
+      break;
+    }
+    case 'unsubscribe': {
+      const message = await handleUnsubscribe({
+        username: interaction.options.getString('username')!,
+      });
+      await interaction.reply({ content: message });
+      break;
+    }
+    case 'list': {
+      const message = await handleListSubscriptions();
+      await interaction.reply({ content: message });
+      break;
+    }
+  }
+}
+
+// Internal command handlers
+async function handleSubscribe({ username }: { username: string }) {
   const subscriptions = loadSubscriptions();
 
   if (subscriptions.some((sub) => sub.username === username)) {
