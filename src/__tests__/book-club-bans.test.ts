@@ -1,6 +1,10 @@
 import { describe, expect, test, beforeEach, mock } from 'bun:test';
 import { Client } from 'discord.js';
-import { registerBookClubBansListeners } from '../book-club-bans';
+import type { Interaction } from 'discord.js';
+import {
+  registerBookClubBansListeners,
+  handleBookclubCommand,
+} from '../book-club-bans';
 import { db } from '../db/index';
 import { bookClubBans } from '../db/schema';
 
@@ -24,12 +28,13 @@ type MockInteraction = {
   commandName: string;
   options: {
     getSubcommand: () => string;
+    getSubcommandGroup: () => string;
   };
   reply: ReturnType<typeof mock>;
   guild: {
     members: {
       fetch: ReturnType<typeof mock>;
-      cache: Map<string, { user: { displayName: string } }>;
+      cache: Map<string, { id: string; displayName: string }>;
     };
   };
 };
@@ -102,6 +107,14 @@ describe('Book Club Bans', () => {
     };
 
     registerBookClubBansListeners(client as unknown as Client);
+
+    // Set up command handling like in index.ts
+    client.on('interactionCreate', async (interaction: MockInteraction) => {
+      if (!interaction.isChatInputCommand()) return;
+      if (interaction.commandName !== 'lgt') return;
+      if (interaction.options.getSubcommandGroup() !== 'bookclub') return;
+      await handleBookclubCommand(interaction as unknown as Interaction);
+    });
   });
 
   test('bans a user when Mike adds banhammer reaction', async () => {
@@ -262,16 +275,23 @@ function createMockReaction({
 function createMockInteraction(overrides = {}) {
   return {
     isChatInputCommand: () => true,
-    commandName: 'bookclub',
+    commandName: 'lgt',
     options: {
       getSubcommand: () => 'bans',
+      getSubcommandGroup: () => 'bookclub',
     },
     reply: mock(),
     guild: {
       members: {
-        fetch: mock(() => Promise.resolve(undefined)),
+        fetch: mock(() => Promise.resolve()),
         cache: new Map([
-          ['123456789', { id: '123456789', user: { displayName: 'TestUser' } }],
+          [
+            '123456789',
+            {
+              id: '123456789',
+              displayName: 'TestUser',
+            },
+          ],
         ]),
       },
     },
