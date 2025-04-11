@@ -19,14 +19,15 @@ export const bookClubBans = sqliteTable('book_club_bans', {
   discordMessageIds: text('discord_message_ids').notNull(),
 });
 
-export const lgtKudosReactions = sqliteTable(
-  'lgt_kudos_reactions',
+export const kudosReactions = sqliteTable(
+  'kudos_reactions',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     messageId: text('message_id').notNull(),
     messageChannelId: text('message_channel_id').notNull(),
     messageAuthorId: text('message_author_id').notNull(),
     reactorId: text('reactor_id').notNull(),
+    guildId: text('guild_id').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -40,6 +41,7 @@ export const lgtKudosReactions = sqliteTable(
       messageAuthorIdx: index('message_author_idx').on(table.messageAuthorId),
       reactorIdx: index('reactor_idx').on(table.reactorId),
       messageIdx: index('message_idx').on(table.messageId),
+      guildIdx: index('guild_idx').on(table.guildId),
       reactorAuthorTimeIdx: index('reactor_author_time_idx').on(
         table.reactorId,
         table.messageAuthorId,

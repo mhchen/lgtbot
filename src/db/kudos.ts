@@ -1,6 +1,6 @@
 import { and, count, eq, gt, sql } from 'drizzle-orm';
 import { db } from './index';
-import { lgtKudosReactions } from './schema';
+import { kudosReactions } from './schema';
 import type { UserKudosStats } from '../types/kudos';
 import { KUDOS_LEVELS, POINTS } from '../types/kudos';
 import { subDays } from 'date-fns';
@@ -10,17 +10,20 @@ export async function addKudosReaction({
   messageChannelId,
   messageAuthorId,
   reactorId,
+  guildId,
 }: {
   messageId: string;
   messageChannelId: string;
   messageAuthorId: string;
   reactorId: string;
+  guildId: string;
 }) {
-  return db.insert(lgtKudosReactions).values({
+  return db.insert(kudosReactions).values({
     messageId,
     messageChannelId,
     messageAuthorId,
     reactorId,
+    guildId,
   });
 }
 
@@ -32,11 +35,11 @@ export async function removeKudosReaction({
   reactorId: string;
 }) {
   return db
-    .delete(lgtKudosReactions)
+    .delete(kudosReactions)
     .where(
       and(
-        eq(lgtKudosReactions.messageId, messageId),
-        eq(lgtKudosReactions.reactorId, reactorId)
+        eq(kudosReactions.messageId, messageId),
+        eq(kudosReactions.reactorId, reactorId)
       )
     );
 }
@@ -44,8 +47,8 @@ export async function removeKudosReaction({
 export async function getReactionCount({ messageId }: { messageId: string }) {
   const result = await db
     .select({ count: count() })
-    .from(lgtKudosReactions)
-    .where(eq(lgtKudosReactions.messageId, messageId));
+    .from(kudosReactions)
+    .where(eq(kudosReactions.messageId, messageId));
   return result[0]?.count ?? 0;
 }
 
@@ -57,11 +60,11 @@ export async function getReactionCount({ messageId }: { messageId: string }) {
 //   const oneDayAgo = subDays(new Date(), 1);
 //   const result = await db
 //     .select({ count: count() })
-//     .from(lgtKudosReactions)
+//     .from(kudosReactions)
 //     .where(
 //       and(
-//         eq(lgtKudosReactions.reactorId, reactorId),
-//         gte(lgtKudosReactions.createdAt, oneDayAgo)
+//         eq(kudosReactions.reactorId, reactorId),
+//         gte(kudosReactions.createdAt, oneDayAgo)
 //       )
 //     );
 //   return result[0]?.count ?? 0;
@@ -75,24 +78,24 @@ export async function getUserKudosStats({
   const result = await db
     .select({
       reactionsReceived: count(),
-      uniqueMessages: sql<number>`COUNT(DISTINCT ${lgtKudosReactions.messageId})`,
+      uniqueMessages: sql<number>`COUNT(DISTINCT ${kudosReactions.messageId})`,
       reactionsGiven: sql<number>`(
         SELECT COUNT(*) 
-        FROM ${lgtKudosReactions} AS reactions_given 
+        FROM ${kudosReactions} AS reactions_given 
         WHERE reactions_given.reactor_id = ${userId}
       )`,
       totalPoints: sql<number>`
-        COUNT(DISTINCT ${lgtKudosReactions.messageId}) * ${POINTS.FIRST_REACTION} +
-        (COUNT(*) - COUNT(DISTINCT ${lgtKudosReactions.messageId})) * ${POINTS.ADDITIONAL_REACTION} +
+        COUNT(DISTINCT ${kudosReactions.messageId}) * ${POINTS.FIRST_REACTION} +
+        (COUNT(*) - COUNT(DISTINCT ${kudosReactions.messageId})) * ${POINTS.ADDITIONAL_REACTION} +
         (
           SELECT COUNT(*) 
-          FROM ${lgtKudosReactions} AS reactions_given 
+          FROM ${kudosReactions} AS reactions_given 
           WHERE reactions_given.reactor_id = ${userId}
         ) * ${POINTS.GIVING_REACTION}
       `,
     })
-    .from(lgtKudosReactions)
-    .where(eq(lgtKudosReactions.messageAuthorId, userId));
+    .from(kudosReactions)
+    .where(eq(kudosReactions.messageAuthorId, userId));
 
   const stats = result[0];
   const totalPoints = stats?.totalPoints ?? 0;
@@ -128,9 +131,9 @@ export async function getTopKudosUsers(limit = 10) {
       })
       .from(
         sql`(
-          SELECT message_author_id as user_id FROM ${lgtKudosReactions}
+          SELECT message_author_id as user_id FROM ${kudosReactions}
           UNION
-          SELECT reactor_id as user_id FROM ${lgtKudosReactions}
+          SELECT reactor_id as user_id FROM ${kudosReactions}
         ) all_users`
       )
   );
@@ -140,23 +143,23 @@ export async function getTopKudosUsers(limit = 10) {
       .select({
         userId: sql<string>`user_stats.user_id`.as('user_id'),
         uniqueMessages: sql<number>`COUNT(DISTINCT CASE 
-          WHEN ${lgtKudosReactions.messageAuthorId} = user_stats.user_id 
-          THEN ${lgtKudosReactions.messageId} 
+          WHEN ${kudosReactions.messageAuthorId} = user_stats.user_id 
+          THEN ${kudosReactions.messageId} 
         END)`.as('unique_messages'),
         reactionsReceived: sql<number>`COUNT(CASE 
-          WHEN ${lgtKudosReactions.messageAuthorId} = user_stats.user_id 
+          WHEN ${kudosReactions.messageAuthorId} = user_stats.user_id 
           THEN 1 
         END)`.as('reactions_received'),
         reactionsGiven: sql<number>`COUNT(CASE 
-          WHEN ${lgtKudosReactions.reactorId} = user_stats.user_id 
+          WHEN ${kudosReactions.reactorId} = user_stats.user_id 
           THEN 1 
         END)`.as('reactions_given'),
       })
       .from(userStatsCTE)
       .leftJoin(
-        lgtKudosReactions,
-        sql`${lgtKudosReactions.messageAuthorId} = user_stats.user_id OR 
-            ${lgtKudosReactions.reactorId} = user_stats.user_id`
+        kudosReactions,
+        sql`${kudosReactions.messageAuthorId} = user_stats.user_id OR 
+            ${kudosReactions.reactorId} = user_stats.user_id`
       )
       .groupBy(sql`user_stats.user_id`)
   );
@@ -215,14 +218,15 @@ export async function getTopMessages({
 
   return db
     .select({
-      messageId: lgtKudosReactions.messageId,
-      messageChannelId: lgtKudosReactions.messageChannelId,
-      messageAuthorId: lgtKudosReactions.messageAuthorId,
+      messageId: kudosReactions.messageId,
+      messageChannelId: kudosReactions.messageChannelId,
+      messageAuthorId: kudosReactions.messageAuthorId,
+      guildId: kudosReactions.guildId,
       reactionCount: sql<number>`COUNT(*) AS reaction_count`,
     })
-    .from(lgtKudosReactions)
-    .where(gt(lgtKudosReactions.createdAt, cutoffDate))
-    .groupBy(lgtKudosReactions.messageId)
+    .from(kudosReactions)
+    .where(gt(kudosReactions.createdAt, cutoffDate))
+    .groupBy(kudosReactions.messageId)
     .orderBy(sql`reaction_count DESC`)
     .limit(limit);
 }

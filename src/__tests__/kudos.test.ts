@@ -4,13 +4,11 @@ import {
   handleKudosReactionRemove,
   handleRankCommand,
   handleLeaderboardCommand,
-  handleProgressCommand,
   handleTopCommand,
 } from '../kudos';
 import { db } from '../db/index';
-import { lgtKudosReactions } from '../db/schema';
+import { kudosReactions } from '../db/schema';
 import type { Message, MessageReaction, User } from 'discord.js';
-import { KUDOS_LEVELS, POINTS } from '../types/kudos';
 import { subDays } from 'date-fns';
 
 const createMockUser = (id: string): User =>
@@ -24,9 +22,9 @@ const createMockMessage = (authorId: string): Message =>
   ({
     id: 'msg123',
     channelId: 'channel123',
-    author: createMockUser(authorId),
+    author: { id: authorId, bot: false },
+    guildId: 'guild123',
     partial: false,
-    fetch: () => Promise.resolve(this),
   }) as unknown as Message;
 
 const createMockReaction = (message: Message): MessageReaction =>
@@ -42,7 +40,7 @@ const createMockReaction = (message: Message): MessageReaction =>
 
 describe('handleKudosReaction', () => {
   beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
+    await db.delete(kudosReactions);
   });
 
   test('prevents self-kudos', async () => {
@@ -58,7 +56,7 @@ describe('handleKudosReaction', () => {
       ephemeral: true,
     });
 
-    const reactions = await db.select().from(lgtKudosReactions);
+    const reactions = await db.select().from(kudosReactions);
     expect(reactions).toHaveLength(0);
   });
 
@@ -68,7 +66,7 @@ describe('handleKudosReaction', () => {
   //   const mockReaction = createMockReaction(mockMessage);
 
   //   for (let i = 0; i < 25; i++) {
-  //     await db.insert(lgtKudosReactions).values({
+  //     await db.insert(kudosReactions).values({
   //       messageId: `msg${i}`,
   //       messageChannelId: 'channel123',
   //       messageAuthorId: `author${i}`,
@@ -85,7 +83,7 @@ describe('handleKudosReaction', () => {
   //     ephemeral: true,
   //   });
 
-  //   const reactions = await db.select().from(lgtKudosReactions);
+  //   const reactions = await db.select().from(kudosReactions);
   //   expect(reactions).toHaveLength(25);
   // });
 
@@ -95,13 +93,14 @@ describe('handleKudosReaction', () => {
     const mockReaction = createMockReaction(mockMessage);
 
     // Add enough reactions to be close to level up (level 1 -> 2)
-    // Need 51 points: 5 unique messages (50 points) + 1 new reaction (10 points) = 60 points
-    for (let i = 0; i < 5; i++) {
-      await db.insert(lgtKudosReactions).values({
+    // Need 50 points: 5 unique messages (40 points) + 1 new reaction (10 points) = 50 points
+    for (let i = 0; i < 4; i++) {
+      await db.insert(kudosReactions).values({
         messageId: `msg${i}`,
         messageChannelId: 'channel123',
         messageAuthorId: 'author123',
         reactorId: `reactor${i}`,
+        guildId: 'guild123',
         createdAt: subDays(new Date(), 1),
       });
     }
@@ -110,48 +109,49 @@ describe('handleKudosReaction', () => {
 
     expect(result?.type).toBe('levelup');
 
-    // Verify the reaction was added
-    const reactions = await db.select().from(lgtKudosReactions);
-    expect(reactions).toHaveLength(6);
+    const reactions = await db.select().from(kudosReactions);
+    expect(reactions).toHaveLength(5);
   });
 });
 
 describe('handleKudosReactionRemove', () => {
   beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
+    await db.delete(kudosReactions);
   });
 
   test('removes kudos reaction', async () => {
     const mockUser = createMockUser('user123');
     const mockReaction = {
-      message: { id: 'msg123' },
+      message: { id: 'msg123', guildId: 'guild123' },
     } as unknown as MessageReaction;
 
-    await db.insert(lgtKudosReactions).values({
+    await db.insert(kudosReactions).values({
       messageId: 'msg123',
       messageChannelId: 'channel123',
       messageAuthorId: 'author123',
       reactorId: 'user123',
+      guildId: 'guild123',
       createdAt: new Date(),
     });
 
     await handleKudosReactionRemove(mockReaction, mockUser);
 
-    const reactions = await db.select().from(lgtKudosReactions);
+    const reactions = await db.select().from(kudosReactions);
     expect(reactions).toHaveLength(0);
   });
 });
 
 describe('handleRankCommand', () => {
   beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
+    await db.delete(kudosReactions);
 
     for (let i = 0; i < 15; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: `msg${i}`,
         messageChannelId: 'channel123',
         messageAuthorId: 'user123',
         reactorId: `reactor${i}`,
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }
@@ -160,8 +160,8 @@ describe('handleRankCommand', () => {
   test('displays user rank', async () => {
     const response = await handleRankCommand({ userId: 'user123' });
 
-    expect(response.embeds[0].data.title).toBe('Kudos Stats for <@user123>');
-    expect(response.embeds[0].data.fields).toHaveLength(5); // 4 stats + next level
+    expect(response.embeds[0].data.title).toBe('Kudos stats');
+    expect(response.embeds[0].data.fields).toHaveLength(6); // 5 stats + next level
   });
 
   test('displays target user rank', async () => {
@@ -170,32 +170,34 @@ describe('handleRankCommand', () => {
       targetUserId: 'target456',
     });
 
-    expect(response.embeds[0].data.title).toBe('Kudos Stats for <@target456>');
+    expect(response.embeds[0].data.title).toBe('Kudos stats');
   });
 });
 
 describe('handleLeaderboardCommand', () => {
   beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
+    await db.delete(kudosReactions);
 
     // User 1: 3 unique messages (30 points) + 2 additional reactions (6 points) = 36 points
     // First add 3 unique messages
     for (let i = 0; i < 3; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: `msg${i}`,
         messageChannelId: 'channel123',
         messageAuthorId: 'user1',
         reactorId: 'user2',
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }
     // Then add 2 additional reactions to msg0 from different reactors
     for (let i = 0; i < 2; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: 'msg0',
         messageChannelId: 'channel123',
         messageAuthorId: 'user1',
         reactorId: `user${i + 3}`, // user3 and user4 react
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }
@@ -203,20 +205,22 @@ describe('handleLeaderboardCommand', () => {
     // User 2: 2 unique messages (20 points) + 1 additional reaction (3 points) + 3 points for giving reactions = 26 points
     // First add 2 unique messages
     for (let i = 0; i < 2; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: `msg${i + 10}`,
         messageChannelId: 'channel123',
         messageAuthorId: 'user2',
         reactorId: 'user3',
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }
     // Then add 1 additional reaction to msg10 from a different reactor
-    await db.insert(lgtKudosReactions).values({
+    await db.insert(kudosReactions).values({
       messageId: 'msg10',
       messageChannelId: 'channel123',
       messageAuthorId: 'user2',
       reactorId: 'user4',
+      guildId: 'guild123',
       createdAt: new Date(),
     });
 
@@ -237,87 +241,31 @@ describe('handleLeaderboardCommand', () => {
   });
 });
 
-describe('handleProgressCommand', () => {
-  beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
-
-    for (let i = 0; i < 20; i++) {
-      await db.insert(lgtKudosReactions).values({
-        messageId: `msg${i}`,
-        messageChannelId: 'channel123',
-        messageAuthorId: 'user123',
-        reactorId: `reactor${i}`,
-        createdAt: new Date(),
-      });
-    }
-
-    for (let i = 0; i < 10; i++) {
-      await db.insert(lgtKudosReactions).values({
-        messageId: `msg_given${i}`,
-        messageChannelId: 'channel123',
-        messageAuthorId: `target${i}`,
-        reactorId: 'user123',
-        createdAt: new Date(),
-      });
-    }
-  });
-
-  test('displays progress', async () => {
-    const response = await handleProgressCommand({ userId: 'user123' });
-
-    expect(response.embeds[0].data.title).toBe('Progress for <@user123>');
-    expect(response.embeds[0].data.fields).toHaveLength(3); // Current level, total points, progress bar
-
-    const fields = response.embeds[0].data.fields || [];
-    expect(fields[0]?.name).toBe('Current Level');
-    expect(fields[1]?.name).toBe('Total Points');
-    expect(fields[2]?.name).toBe('Progress to Next Level');
-
-    const expectedTotalPoints =
-      20 * POINTS.FIRST_REACTION + 10 * POINTS.GIVING_REACTION;
-    const currentLevel = KUDOS_LEVELS.find(
-      (l) =>
-        expectedTotalPoints >= l.minPoints &&
-        (!l.maxPoints || expectedTotalPoints <= l.maxPoints)
-    );
-    const nextLevel = KUDOS_LEVELS.find(
-      (l) => l.level === (currentLevel?.level ?? 0) + 1
-    );
-    const pointsToNextLevel = nextLevel
-      ? nextLevel.minPoints - expectedTotalPoints
-      : 0;
-
-    expect(fields[0]?.value).toBe(
-      `${currentLevel?.level} (${currentLevel?.name})`
-    );
-    expect(fields[1]?.value).toBe(`${expectedTotalPoints}`);
-    expect(fields[2]?.value).toContain(`${pointsToNextLevel} points needed`);
-  });
-});
-
 describe('handleTopCommand', () => {
   beforeEach(async () => {
-    await db.delete(lgtKudosReactions);
+    await db.delete(kudosReactions);
 
     // Add reactions to create top messages
     // Message 1: 10 reactions
     for (let i = 0; i < 10; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: 'msg1',
         messageChannelId: 'channel1',
         messageAuthorId: 'user1',
         reactorId: `reactor${i}`,
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }
 
     // Message 2: 8 reactions
     for (let i = 0; i < 8; i++) {
-      await db.insert(lgtKudosReactions).values({
+      await db.insert(kudosReactions).values({
         messageId: 'msg2',
         messageChannelId: 'channel1',
         messageAuthorId: 'user2',
         reactorId: `reactor${i + 10}`,
+        guildId: 'guild123',
         createdAt: new Date(),
       });
     }

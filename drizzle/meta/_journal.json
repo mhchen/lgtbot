@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1743786125479,
-      "tag": "0000_funny_machine_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1744005554957,
-      "tag": "0001_married_the_anarchist",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1744007536659,
-      "tag": "0002_yummy_mulholland_black",
+      "when": 1744353663617,
+      "tag": "0000_tranquil_bruce_banner",
       "breakpoints": true
     }
   ]

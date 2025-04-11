@@ -1,68 +1,174 @@
 {
-  "id": "00000000-0000-0000-0000-000000000000",
-  "prevId": "",
   "version": "6",
   "dialect": "sqlite",
+  "id": "7acc8df9-2d25-44e1-928a-4e5a90b72db1",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "twitch_subscriptions": {
-      "name": "twitch_subscriptions",
-      "columns": {
-        "id": {
-          "autoincrement": true,
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": false
-        },
-        "username": {
-          "autoincrement": false,
-          "name": "username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "twitch_subscription_id": {
-          "autoincrement": false,
-          "name": "twitch_subscription_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "compositePrimaryKeys": {},
-      "indexes": {},
-      "foreignKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "book_club_bans": {
       "name": "book_club_bans",
       "columns": {
         "id": {
-          "autoincrement": true,
           "name": "id",
           "type": "integer",
           "primaryKey": true,
-          "notNull": false
+          "notNull": true,
+          "autoincrement": true
         },
         "discord_user_id": {
-          "autoincrement": false,
           "name": "discord_user_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "autoincrement": false
         },
         "discord_message_ids": {
-          "autoincrement": false,
           "name": "discord_message_ids",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "autoincrement": false
         }
       },
-      "compositePrimaryKeys": {},
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "kudos_reactions": {
+      "name": "kudos_reactions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "message_channel_id": {
+          "name": "message_channel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "message_author_id": {
+          "name": "message_author_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reactor_id": {
+          "name": "reactor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "guild_id": {
+          "name": "guild_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "message_reactor_unique_idx": {
+          "name": "message_reactor_unique_idx",
+          "columns": [
+            "message_id",
+            "reactor_id"
+          ],
+          "isUnique": true
+        },
+        "message_author_idx": {
+          "name": "message_author_idx",
+          "columns": [
+            "message_author_id"
+          ],
+          "isUnique": false
+        },
+        "reactor_idx": {
+          "name": "reactor_idx",
+          "columns": [
+            "reactor_id"
+          ],
+          "isUnique": false
+        },
+        "message_idx": {
+          "name": "message_idx",
+          "columns": [
+            "message_id"
+          ],
+          "isUnique": false
+        },
+        "guild_idx": {
+          "name": "guild_idx",
+          "columns": [
+            "guild_id"
+          ],
+          "isUnique": false
+        },
+        "reactor_author_time_idx": {
+          "name": "reactor_author_time_idx",
+          "columns": [
+            "reactor_id",
+            "message_author_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "twitch_subscriptions": {
+      "name": "twitch_subscriptions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "twitch_subscription_id": {
+          "name": "twitch_subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     }
@@ -73,5 +179,8 @@
     "schemas": {},
     "tables": {},
     "columns": {}
+  },
+  "internal": {
+    "indexes": {}
   }
 }

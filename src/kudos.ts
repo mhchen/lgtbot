@@ -43,11 +43,6 @@ export function getKudosCommands() {
       )
       .addSubcommand((subcommand) =>
         subcommand
-          .setName('progress')
-          .setDescription('Show your progress to next level')
-      )
-      .addSubcommand((subcommand) =>
-        subcommand
           .setName('top')
           .setDescription('Show most helpful messages')
           .addStringOption((option) =>
@@ -82,13 +77,6 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       await interaction.reply(response);
       break;
     }
-    case 'progress': {
-      const response = await handleProgressCommand({
-        userId: interaction.user.id,
-      });
-      await interaction.reply(response);
-      break;
-    }
     case 'top': {
       const timeframe = interaction.options.getString('timeframe');
       const response = await handleTopCommand({
@@ -109,9 +97,14 @@ export async function handleRankCommand({
 }) {
   const stats = await getUserKudosStats({ userId: targetUserId ?? userId });
   const embed = new EmbedBuilder()
-    .setTitle(`Kudos Stats for <@${stats.userId}>`)
+    .setTitle(`Kudos stats`)
     .setColor(0x00ff00)
     .addFields(
+      {
+        name: 'User',
+        value: `<@${stats.userId}>`,
+        inline: true,
+      },
       {
         name: 'Level',
         value: `${stats.level.level} (${stats.level.name})`,
@@ -163,47 +156,6 @@ export async function handleLeaderboardCommand() {
   return { embeds: [embed] };
 }
 
-export async function handleProgressCommand({ userId }: { userId: string }) {
-  const stats = await getUserKudosStats({ userId });
-  const embed = new EmbedBuilder()
-    .setTitle(`Progress for <@${userId}>`)
-    .setColor(0x00ff00)
-    .addFields(
-      {
-        name: 'Current Level',
-        value: `${stats.level.level} (${stats.level.name})`,
-        inline: true,
-      },
-      {
-        name: 'Total Points',
-        value: stats.totalPoints.toString(),
-        inline: true,
-      }
-    );
-
-  if (stats.pointsToNextLevel !== null) {
-    const progress = Math.floor(
-      ((stats.level.maxPoints! -
-        stats.pointsToNextLevel -
-        stats.level.minPoints) /
-        (stats.level.maxPoints! - stats.level.minPoints)) *
-        10
-    );
-    const progressBar = '█'.repeat(progress) + '░'.repeat(10 - progress);
-    embed.addFields({
-      name: 'Progress to Next Level',
-      value: `${progressBar} (${stats.pointsToNextLevel} points needed)`,
-    });
-  } else {
-    embed.addFields({
-      name: 'Progress',
-      value: 'Maximum level reached! 🎉',
-    });
-  }
-
-  return { embeds: [embed] };
-}
-
 export async function handleTopCommand({
   timeframe = '7 days',
 }: {
@@ -216,7 +168,7 @@ export async function handleTopCommand({
     .setDescription(
       topMessages
         .map((msg, index) => {
-          const messageLink = `https://discord.com/channels/${msg.messageChannelId}/${msg.messageId}`;
+          const messageLink = `https://discord.com/channels/${msg.guildId}/${msg.messageChannelId}/${msg.messageId}`;
           return `${index + 1}. <@${msg.messageAuthorId}> - ${
             msg.reactionCount
           } reactions - [Jump to message](${messageLink})`;
@@ -248,9 +200,18 @@ export async function handleKudosReaction(
   const messageChannelId = reaction.message.channelId;
   const messageAuthorId = reaction.message.author?.id;
   const reactorId = user.id;
+  const guildId = reaction.message.guildId;
 
   if (!messageAuthorId || reaction.message.author?.bot) {
     return null;
+  }
+
+  if (!guildId) {
+    return {
+      type: 'error',
+      message: 'Cannot give kudos in DMs!',
+      ephemeral: true,
+    };
   }
 
   if (messageAuthorId === reactorId) {
@@ -278,6 +239,7 @@ export async function handleKudosReaction(
     messageChannelId,
     messageAuthorId,
     reactorId,
+    guildId,
   });
 
   const newStats = await getUserKudosStats({ userId: messageAuthorId });
