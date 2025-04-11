@@ -1,15 +1,22 @@
 import axios from 'axios';
+import { SlashCommandSubcommandGroupBuilder } from 'discord.js';
+import { db } from './db/index';
+import { twitchSubscriptions } from './db/schema';
+import { eq } from 'drizzle-orm';
 
 interface EventSubSubscription {
   id: string;
   status: string;
   type: string;
-  condition: Record<string, string>;
-  created_at: string;
+  version: string;
+  condition: {
+    broadcaster_user_id: string;
+  };
   transport: {
     method: string;
     callback: string;
   };
+  created_at: string;
 }
 
 interface TwitchStreamInfo {
@@ -37,11 +44,7 @@ async function getAccessToken() {
   return accessToken;
 }
 
-export async function getUserId({
-  username,
-}: {
-  username: string;
-}): Promise<string> {
+async function getUserId({ username }: { username: string }): Promise<string> {
   const token = await getAccessToken();
 
   const response = await axios.get(
@@ -61,7 +64,7 @@ export async function getUserId({
   return response.data.data[0].id;
 }
 
-export async function subscribeToStream({
+async function subscribeToStream({
   username,
 }: {
   username: string;
@@ -79,8 +82,8 @@ export async function subscribeToStream({
       },
       transport: {
         method: 'webhook',
-        callback: process.env.WEBHOOK_URL!,
-        secret: process.env.WEBHOOK_SECRET!,
+        callback: `${process.env.TWITCH_WEBHOOK_URL!}/webhooks/twitch`,
+        secret: process.env.TWITCH_WEBHOOK_SECRET!,
       },
     },
     {
@@ -94,9 +97,7 @@ export async function subscribeToStream({
   return response.data.data[0].id;
 }
 
-export async function listEventSubSubscriptions(): Promise<
-  EventSubSubscription[]
-> {
+async function listEventSubSubscriptions(): Promise<EventSubSubscription[]> {
   const token = await getAccessToken();
 
   const response = await axios.get(
@@ -112,7 +113,7 @@ export async function listEventSubSubscriptions(): Promise<
   return response.data.data;
 }
 
-export async function getStreamInfo({
+async function getStreamInfo({
   userId,
 }: {
   userId: string;
@@ -137,7 +138,7 @@ export async function getStreamInfo({
   };
 }
 
-export async function getUserInfo({
+async function getUserInfo({
   userId,
 }: {
   userId: string;
@@ -160,19 +161,124 @@ export async function getUserInfo({
   };
 }
 
-export async function deleteEventSubSubscription(subscriptionId: string) {
-  const url = `https://api.twitch.tv/helix/eventsub/subscriptions?id=${subscriptionId}`;
+async function deleteEventSubSubscription(subscriptionId: string) {
   const token = await getAccessToken();
 
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      'Client-ID': clientId,
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  await axios.delete(
+    `https://api.twitch.tv/helix/eventsub/subscriptions?id=${subscriptionId}`,
+    {
+      headers: {
+        'Client-ID': clientId,
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+}
 
-  if (!response.ok) {
-    throw new Error(`Failed to delete subscription: ${response.statusText}`);
+// Command builder
+export function getTwitchCommands() {
+  return (group: SlashCommandSubcommandGroupBuilder) =>
+    group
+      .setName('twitch')
+      .setDescription('Twitch integration commands')
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('subscribe')
+          .setDescription('Subscribe to a Twitch channel')
+          .addStringOption((option) =>
+            option
+              .setName('username')
+              .setDescription('Twitch username to subscribe to')
+              .setRequired(true)
+          )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('unsubscribe')
+          .setDescription('Unsubscribe from a Twitch channel')
+          .addStringOption((option) =>
+            option
+              .setName('username')
+              .setDescription('Twitch username to unsubscribe from')
+              .setRequired(true)
+          )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('list')
+          .setDescription('List all Twitch channel subscriptions')
+      );
+}
+
+// Database operations
+function loadSubscriptions() {
+  return db.select().from(twitchSubscriptions).all();
+}
+
+function loadSubscription({ username }: { username: string }) {
+  return db
+    .select()
+    .from(twitchSubscriptions)
+    .where(eq(twitchSubscriptions.username, username))
+    .get();
+}
+
+function saveSubscription({
+  username,
+  twitchSubscriptionId,
+}: {
+  username: string;
+  twitchSubscriptionId: string;
+}) {
+  db.insert(twitchSubscriptions)
+    .values({
+      username,
+      twitchSubscriptionId,
+    })
+    .run();
+}
+
+function deleteSubscription({ username }: { username: string }) {
+  db.delete(twitchSubscriptions)
+    .where(eq(twitchSubscriptions.username, username))
+    .run();
+}
+
+// Command handlers
+export async function handleSubscribe({ username }: { username: string }) {
+  const subscriptions = loadSubscriptions();
+
+  if (subscriptions.some((sub) => sub.username === username)) {
+    return `Already subscribed to **${username}**`;
   }
+
+  const subscriptionId = await subscribeToStream({ username });
+
+  saveSubscription({ username, twitchSubscriptionId: subscriptionId });
+  return `Successfully subscribed to https://www.twitch.tv/${username}`;
+}
+
+export async function handleUnsubscribe({ username }: { username: string }) {
+  const subscription = loadSubscription({ username });
+
+  if (!subscription) {
+    return `Not subscribed to **${username}**`;
+  }
+
+  await deleteEventSubSubscription(subscription.twitchSubscriptionId);
+  deleteSubscription({ username });
+  return `Successfully unsubscribed from **${username}**`;
+}
+
+export async function handleListSubscriptions() {
+  const subscriptions = loadSubscriptions();
+
+  if (subscriptions.length === 0) {
+    return 'No active subscriptions';
+  }
+
+  return [
+    'LGTBot is currently subscribed to the following Twitch channels:',
+    ...subscriptions.map((sub) => `* https://www.twitch.tv/${sub.username}`),
+  ].join('\n');
 }

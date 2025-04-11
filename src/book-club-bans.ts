@@ -2,9 +2,9 @@ import {
   AttachmentBuilder,
   Client,
   Events,
-  SlashCommandBuilder,
   TextChannel,
   type Interaction,
+  SlashCommandSubcommandGroupBuilder,
 } from 'discord.js';
 import { db } from './db/index';
 import path from 'path';
@@ -84,18 +84,22 @@ function getRandomMikeTitle(): string {
   return MIKE_TITLES[Math.floor(Math.random() * MIKE_TITLES.length)];
 }
 
-const bookclubCommand = new SlashCommandBuilder()
-  .setName('bookclub')
-  .setDescription('Book club management commands')
-  .addSubcommand((subcommand) =>
-    subcommand
-      .setName('bans')
-      .setDescription('Display the book club ban leaderboard')
-  );
+export function getBookClubCommands() {
+  return (group: SlashCommandSubcommandGroupBuilder) =>
+    group
+      .setName('bookclub')
+      .setDescription('Book club commands')
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('bans')
+          .setDescription('Display the book club ban leaderboard')
+      );
+}
 
 export async function handleBookclubCommand(interaction: Interaction) {
   if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName !== 'bookclub') return;
+  if (interaction.commandName !== 'lgt') return;
+  if (interaction.options.getSubcommandGroup() !== 'bookclub') return;
 
   if (interaction.options.getSubcommand() === 'bans') {
     const bans = db
@@ -282,8 +286,6 @@ export async function registerBookClubBansListeners(client: Client) {
   });
 
   client.on('interactionCreate', handleBookclubCommand);
-
-  await client.application?.commands.create(bookclubCommand);
 
   console.log('Book club bans listeners registered');
 }

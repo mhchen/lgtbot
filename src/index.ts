@@ -5,24 +5,22 @@ import {
   PermissionFlagsBits,
 } from 'discord.js';
 import pc from 'picocolors';
+import { registerCommands } from './commands';
+import { startWebhookServer } from './monitor';
+import {
+  registerBookClubBansListeners,
+  handleBookclubCommand,
+} from './book-club-bans';
+import { registerNoelRepliesListeners } from './noel-replies';
+import {
+  registerKudosListeners,
+  handleCommand as handleKudosCommand,
+} from './kudos';
 import {
   handleListSubscriptions,
   handleSubscribe,
   handleUnsubscribe,
-  registerCommands,
-  SubscriptionCommand,
-} from './commands';
-import { startWebhookServer } from './monitor';
-import { registerBookClubBansListeners } from './book-club-bans';
-import { registerNoelRepliesListeners } from './noel-replies';
-import {
-  handleLeaderboardCommand,
-  handleProgressCommand,
-  handleRankCommand,
-  handleTopCommand,
-  KudosCommand,
-  registerKudosListeners,
-} from './kudos';
+} from './twitch';
 
 const client = new Client({
   intents: [
@@ -51,39 +49,14 @@ client.on('interactionCreate', (interaction) =>
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
+    if (commandName !== 'lgt') return;
 
-    switch (commandName) {
-      case KudosCommand.Rank: {
-        const targetUser = interaction.options.getUser('user');
-        const response = await handleRankCommand({
-          userId: interaction.user.id,
-          targetUserId: targetUser?.id,
-        });
-        await interaction.reply(response);
-        return;
-      }
-      case KudosCommand.Leaderboard: {
-        const response = await handleLeaderboardCommand();
-        await interaction.reply(response);
-        return;
-      }
-      case KudosCommand.Progress: {
-        const response = await handleProgressCommand({
-          userId: interaction.user.id,
-        });
-        await interaction.reply(response);
-        return;
-      }
-      case KudosCommand.Top: {
-        const timeframe =
-          interaction.options.getString('timeframe') ?? '7 days';
-        const response = await handleTopCommand({ timeframe });
-        await interaction.reply(response);
-        return;
-      }
-    }
+    const group = interaction.options.getSubcommandGroup();
+    const subcommand = interaction.options.getSubcommand();
 
+    // Check permissions for twitch commands
     if (
+      group === 'twitch' &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)
     ) {
       await interaction.reply({
@@ -93,37 +66,44 @@ client.on('interactionCreate', (interaction) =>
       return;
     }
 
-    console.log(
-      'Command received:',
-      pc.yellowBright(commandName),
-      'with username:',
-      pc.cyanBright(interaction.options.getString('username')!)
-    );
+    switch (group) {
+      case 'kudos':
+        await handleKudosCommand(interaction);
+        break;
 
-    switch (commandName) {
-      case SubscriptionCommand.TwitchSubscribe: {
-        const message = await handleSubscribe({
-          username: interaction.options.getString('username')!,
-        });
-        await interaction.reply({
-          content: message,
-        });
+      case 'bookclub':
+        await handleBookclubCommand(interaction);
         break;
-      }
-      case SubscriptionCommand.TwitchUnsubscribe: {
-        const message = await handleUnsubscribe({
-          username: interaction.options.getString('username')!,
-        });
-        await interaction.reply({
-          content: message,
-        });
-        break;
-      }
-      case SubscriptionCommand.TwitchListSubscriptions: {
-        const message = await handleListSubscriptions();
-        await interaction.reply({
-          content: message,
-        });
+
+      case 'twitch': {
+        console.log(
+          'Twitch command received:',
+          pc.yellowBright(subcommand),
+          'with username:',
+          pc.cyanBright(interaction.options.getString('username')!)
+        );
+
+        switch (subcommand) {
+          case 'subscribe': {
+            const message = await handleSubscribe({
+              username: interaction.options.getString('username')!,
+            });
+            await interaction.reply({ content: message });
+            break;
+          }
+          case 'unsubscribe': {
+            const message = await handleUnsubscribe({
+              username: interaction.options.getString('username')!,
+            });
+            await interaction.reply({ content: message });
+            break;
+          }
+          case 'list': {
+            const message = await handleListSubscriptions();
+            await interaction.reply({ content: message });
+            break;
+          }
+        }
         break;
       }
     }

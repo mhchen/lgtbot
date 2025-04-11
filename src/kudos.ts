@@ -1,11 +1,12 @@
 import {
   EmbedBuilder,
   MessageReaction,
-  SlashCommandBuilder,
   User,
   Client,
   TextChannel,
   Events,
+  ChatInputCommandInteraction,
+  SlashCommandSubcommandGroupBuilder,
 } from 'discord.js';
 import {
   addKudosReaction,
@@ -16,46 +17,88 @@ import {
   removeKudosReaction,
 } from './db/kudos';
 
-export enum KudosCommand {
-  Rank = 'lgtkudos-rank',
-  Leaderboard = 'lgtkudos-leaderboard',
-  Progress = 'lgtkudos-progress',
-  Top = 'lgtkudos-top',
-}
-
 const LGT_EMOJI_NAME = 'lgt';
 
-export const kudosCommands = [
-  new SlashCommandBuilder()
-    .setName(KudosCommand.Rank)
-    .setDescription('Display your current rank, level, and points')
-    .addUserOption((option) =>
-      option
-        .setName('user')
-        .setDescription('User to check rank for (defaults to you)')
-        .setRequired(false)
-    ),
-  new SlashCommandBuilder()
-    .setName(KudosCommand.Leaderboard)
-    .setDescription('Show top 10 helpful members'),
-  new SlashCommandBuilder()
-    .setName(KudosCommand.Progress)
-    .setDescription('Show your progress to next level'),
-  new SlashCommandBuilder()
-    .setName(KudosCommand.Top)
-    .setDescription('Show most helpful messages of the week')
-    .addStringOption((option) =>
-      option
-        .setName('timeframe')
-        .setDescription('Time period (defaults to 7 days)')
-        .setRequired(false)
-        .addChoices(
-          { name: 'Today', value: '1 day' },
-          { name: 'This week', value: '7 days' },
-          { name: 'This month', value: '30 days' }
-        )
-    ),
-];
+// Command definitions
+export function getKudosCommands() {
+  return (group: SlashCommandSubcommandGroupBuilder) =>
+    group
+      .setName('kudos')
+      .setDescription('Kudos system commands')
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('rank')
+          .setDescription('Display your current rank, level, and points')
+          .addUserOption((option) =>
+            option
+              .setName('user')
+              .setDescription('User to check rank for (defaults to you)')
+              .setRequired(false)
+          )
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('leaderboard')
+          .setDescription('Show top 10 helpful members')
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('progress')
+          .setDescription('Show your progress to next level')
+      )
+      .addSubcommand((subcommand) =>
+        subcommand
+          .setName('top')
+          .setDescription('Show most helpful messages')
+          .addStringOption((option) =>
+            option
+              .setName('timeframe')
+              .setDescription('Time period (defaults to 7 days)')
+              .setRequired(false)
+              .addChoices(
+                { name: 'Today', value: '1 day' },
+                { name: 'This week', value: '7 days' },
+                { name: 'This month', value: '30 days' }
+              )
+          )
+      );
+}
+
+export async function handleCommand(interaction: ChatInputCommandInteraction) {
+  const subcommand = interaction.options.getSubcommand();
+
+  switch (subcommand) {
+    case 'rank': {
+      const targetUser = interaction.options.getUser('user');
+      const response = await handleRankCommand({
+        userId: interaction.user.id,
+        targetUserId: targetUser?.id,
+      });
+      await interaction.reply(response);
+      break;
+    }
+    case 'leaderboard': {
+      const response = await handleLeaderboardCommand();
+      await interaction.reply(response);
+      break;
+    }
+    case 'progress': {
+      const response = await handleProgressCommand({
+        userId: interaction.user.id,
+      });
+      await interaction.reply(response);
+      break;
+    }
+    case 'top': {
+      const timeframe = interaction.options.getString('timeframe');
+      const response = await handleTopCommand({
+        timeframe: timeframe ?? undefined,
+      });
+      await interaction.reply(response);
+      break;
+    }
+  }
+}
 
 export async function handleRankCommand({
   userId,
