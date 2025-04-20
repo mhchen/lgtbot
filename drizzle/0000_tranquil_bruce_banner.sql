@@ -10,7 +10,6 @@ CREATE TABLE `kudos_reactions` (
 	`message_channel_id` text NOT NULL,
 	`message_author_id` text NOT NULL,
 	`reactor_id` text NOT NULL,
-	`guild_id` text NOT NULL,
 	`created_at` integer DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
@@ -18,7 +17,6 @@ CREATE UNIQUE INDEX `message_reactor_unique_idx` ON `kudos_reactions` (`message_
 CREATE INDEX `message_author_idx` ON `kudos_reactions` (`message_author_id`);--> statement-breakpoint
 CREATE INDEX `reactor_idx` ON `kudos_reactions` (`reactor_id`);--> statement-breakpoint
 CREATE INDEX `message_idx` ON `kudos_reactions` (`message_id`);--> statement-breakpoint
-CREATE INDEX `guild_idx` ON `kudos_reactions` (`guild_id`);--> statement-breakpoint
 CREATE INDEX `reactor_author_time_idx` ON `kudos_reactions` (`reactor_id`,`message_author_id`,`created_at`);--> statement-breakpoint
 CREATE TABLE `twitch_subscriptions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
