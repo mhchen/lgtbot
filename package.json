@@ -6,6 +6,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:check": "drizzle-kit check",
+    "db:migrate": "drizzle-kit migrate",
     "db:up": "drizzle-kit up",
     "db:studio": "drizzle-kit studio",
     "dev": "bun run src/index.ts",
