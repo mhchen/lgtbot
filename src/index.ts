@@ -4,17 +4,18 @@ import {
   Partials,
   PermissionFlagsBits,
 } from 'discord.js';
-import pc from 'picocolors';
-import {
-  handleListSubscriptions,
-  handleSubscribe,
-  handleUnsubscribe,
-  registerCommands,
-  SubscriptionCommand,
-} from './commands';
+import { registerCommands } from './commands';
 import { startWebhookServer } from './monitor';
-import { registerBookClubBansListeners } from './book-club-bans';
+import {
+  registerBookClubBansListeners,
+  handleBookclubCommand,
+} from './book-club-bans';
 import { registerNoelRepliesListeners } from './noel-replies';
+import {
+  registerKudosListeners,
+  handleCommand as handleKudosCommand,
+} from './kudos';
+import { handleCommand as handleTwitchCommand } from './twitch';
 
 const client = new Client({
   intents: [
@@ -26,14 +27,16 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
-const NOTIFICATION_CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID!;
-
 client.once('ready', async () => {
   console.log('Bot is ready!');
   await registerCommands();
   registerBookClubBansListeners(client);
   registerNoelRepliesListeners(client);
-  startWebhookServer({ client, channelId: NOTIFICATION_CHANNEL_ID });
+  registerKudosListeners(client);
+  startWebhookServer({
+    client,
+    channelId: process.env.NOTIFICATION_CHANNEL_ID!,
+  });
 });
 
 client.on('interactionCreate', (interaction) =>
@@ -41,8 +44,12 @@ client.on('interactionCreate', (interaction) =>
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
+    if (commandName !== 'lgt') return;
+
+    const group = interaction.options.getSubcommandGroup();
 
     if (
+      group === 'twitch' &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)
     ) {
       await interaction.reply({
@@ -51,39 +58,19 @@ client.on('interactionCreate', (interaction) =>
       });
       return;
     }
-    console.log(
-      'Command received:',
-      pc.yellowBright(commandName),
-      'with username:',
-      pc.cyanBright(interaction.options.getString('username')!)
-    );
 
-    switch (commandName) {
-      case SubscriptionCommand.TwitchSubscribe: {
-        const message = await handleSubscribe({
-          username: interaction.options.getString('username')!,
-        });
-        await interaction.reply({
-          content: message,
-        });
+    switch (group) {
+      case 'kudos':
+        await handleKudosCommand(interaction);
         break;
-      }
-      case SubscriptionCommand.TwitchUnsubscribe: {
-        const message = await handleUnsubscribe({
-          username: interaction.options.getString('username')!,
-        });
-        await interaction.reply({
-          content: message,
-        });
+
+      case 'bookclub':
+        await handleBookclubCommand(interaction);
         break;
-      }
-      case SubscriptionCommand.TwitchListSubscriptions: {
-        const message = await handleListSubscriptions();
-        await interaction.reply({
-          content: message,
-        });
+
+      case 'twitch':
+        await handleTwitchCommand(interaction);
         break;
-      }
     }
   })(interaction).catch(console.error)
 );
