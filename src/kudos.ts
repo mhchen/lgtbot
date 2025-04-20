@@ -141,14 +141,16 @@ export async function handleLeaderboardCommand() {
     .setTitle('LGT Kudos Leaderboard')
     .setColor(0x00ff00)
     .setDescription(
-      topUsers
-        .map(
-          (user, index) =>
-            `${index + 1}. <@${user.userId}> - Level ${user.level.level} (${
-              user.level.name
-            }) - ${user.totalPoints} points`
-        )
-        .join('\n')
+      topUsers.length > 0
+        ? topUsers
+            .map(
+              (user, index) =>
+                `${index + 1}. <@${user.userId}> - Level ${user.level.level} (${
+                  user.level.name
+                }) - ${user.totalPoints} points`
+            )
+            .join('\n')
+        : 'No users have earned any kudos yet!'
     );
 
   return { embeds: [embed] };
