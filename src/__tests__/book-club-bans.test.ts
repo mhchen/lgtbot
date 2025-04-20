@@ -7,6 +7,11 @@ import {
 } from '../book-club-bans';
 import { db } from '../db/index';
 import { bookClubBans } from '../db/schema';
+import {
+  mockDiscordClient,
+  mockDiscordChannel,
+  resetMockDiscordClient,
+} from './mockDiscordClient';
 
 type MockReaction = {
   emoji: { name: string };
@@ -39,82 +44,27 @@ type MockInteraction = {
   };
 };
 
-type EventMap = {
-  messageReactionAdd: [MockReaction, MockUser];
-  messageReactionRemove: [MockReaction, MockUser];
-  interactionCreate: [MockInteraction];
-};
-
-type MockClient = {
-  on: <K extends keyof EventMap>(
-    event: K,
-    handler: (...args: EventMap[K]) => void | Promise<void>
-  ) => void;
-  emit: <K extends keyof EventMap>(
-    event: K,
-    ...args: EventMap[K]
-  ) => Promise<boolean>;
-  channels: {
-    fetch: ReturnType<typeof mock>;
-  };
-  application?: {
-    commands: {
-      create: ReturnType<typeof mock>;
-    };
-  };
-};
-
 describe('Book Club Bans', () => {
-  let client: MockClient;
-  let mockChannel: { send: ReturnType<typeof mock> };
   let user: MockUser;
-  let eventHandlers: {
-    [K in keyof EventMap]?: ((...args: EventMap[K]) => void | Promise<void>)[];
-  };
-
   beforeEach(() => {
+    resetMockDiscordClient();
     db.delete(bookClubBans).run();
-    eventHandlers = {};
-
-    mockChannel = { send: mock() };
-    client = {
-      on: (event, handler) => {
-        if (!eventHandlers[event]) {
-          eventHandlers[event] = [];
-        }
-        eventHandlers[event]!.push(handler);
-      },
-      emit: async (event, ...args) => {
-        const handlers = eventHandlers[event] || [];
-        for (const handler of handlers) {
-          await handler(...args);
-        }
-        return handlers.length > 0;
-      },
-      channels: {
-        fetch: mock(() => Promise.resolve(mockChannel)),
-      },
-      application: {
-        commands: {
-          create: mock(),
-        },
-      },
-    };
-
     user = {
       id: '356482549549236225',
       toString: () => `<@356482549549236225>`,
     };
 
-    registerBookClubBansListeners(client as unknown as Client);
+    registerBookClubBansListeners(mockDiscordClient as unknown as Client);
 
-    // Set up command handling like in index.ts
-    client.on('interactionCreate', async (interaction: MockInteraction) => {
-      if (!interaction.isChatInputCommand()) return;
-      if (interaction.commandName !== 'lgt') return;
-      if (interaction.options.getSubcommandGroup() !== 'bookclub') return;
-      await handleBookclubCommand(interaction as unknown as Interaction);
-    });
+    mockDiscordClient.on(
+      'interactionCreate',
+      async (interaction: MockInteraction) => {
+        if (!interaction.isChatInputCommand()) return;
+        if (interaction.commandName !== 'lgt') return;
+        if (interaction.options.getSubcommandGroup() !== 'bookclub') return;
+        await handleBookclubCommand(interaction as unknown as Interaction);
+      }
+    );
   });
 
   test('bans a user when Mike adds banhammer reaction', async () => {
@@ -122,15 +72,15 @@ describe('Book Club Bans', () => {
       messageId: '987654321',
       userId: '123456789',
     });
-    await client.emit('messageReactionAdd', reaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', reaction, user);
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(1);
     expect(bans[0].discordUserId).toBe('123456789');
     expect(bans[0].discordMessageIds).toBe('987654321');
 
-    expect(mockChannel.send).toHaveBeenCalledTimes(1);
-    expect(mockChannel.send).toHaveBeenCalledWith(
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(1);
+    expect(mockDiscordChannel.send).toHaveBeenCalledWith(
       expect.stringMatching(/^<@123456789> has been banned/)
     );
   });
@@ -145,16 +95,16 @@ describe('Book Club Bans', () => {
       userId: '123456789',
     });
 
-    await client.emit('messageReactionAdd', firstReaction, user);
-    await client.emit('messageReactionAdd', secondReaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', firstReaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', secondReaction, user);
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(1);
     expect(bans[0].discordUserId).toBe('123456789');
     expect(bans[0].discordMessageIds).toBe('987654321,111111111');
 
-    expect(mockChannel.send).toHaveBeenCalledTimes(2);
-    expect(mockChannel.send).toHaveBeenLastCalledWith({
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(2);
+    expect(mockDiscordChannel.send).toHaveBeenLastCalledWith({
       content: expect.stringMatching(
         /^<@123456789> has received their 2nd ban/
       ),
@@ -168,14 +118,14 @@ describe('Book Club Bans', () => {
       userId: '123456789',
     });
 
-    await client.emit('messageReactionAdd', reaction, user);
-    await client.emit('messageReactionRemove', reaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', reaction, user);
+    await mockDiscordClient.emit('messageReactionRemove', reaction, user);
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(0);
 
-    expect(mockChannel.send).toHaveBeenCalledTimes(2);
-    expect(mockChannel.send).toHaveBeenLastCalledWith(
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(2);
+    expect(mockDiscordChannel.send).toHaveBeenLastCalledWith(
       expect.stringMatching(
         /^<@123456789> has been brought back into .+ Mike's good graces\.$/
       )
@@ -192,17 +142,17 @@ describe('Book Club Bans', () => {
       userId: '123456789',
     });
 
-    await client.emit('messageReactionAdd', reaction, user);
-    await client.emit('messageReactionAdd', secondReaction, user);
-    await client.emit('messageReactionRemove', reaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', reaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', secondReaction, user);
+    await mockDiscordClient.emit('messageReactionRemove', reaction, user);
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(1);
     expect(bans[0].discordUserId).toBe('123456789');
     expect(bans[0].discordMessageIds).toBe('111111111');
 
-    expect(mockChannel.send).toHaveBeenCalledTimes(3);
-    expect(mockChannel.send).toHaveBeenLastCalledWith(
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(3);
+    expect(mockDiscordChannel.send).toHaveBeenLastCalledWith(
       expect.stringMatching(/<@123456789> .*\b1 strike remaining\./)
     );
   });
@@ -213,15 +163,15 @@ describe('Book Club Bans', () => {
         messageId: `message${i}`,
         userId: '123456789',
       });
-      await client.emit('messageReactionAdd', newReaction, user);
+      await mockDiscordClient.emit('messageReactionAdd', newReaction, user);
     }
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(1);
     expect(bans[0].discordMessageIds.split(',').length).toBe(10);
 
-    expect(mockChannel.send).toHaveBeenCalledTimes(10);
-    expect(mockChannel.send).toHaveBeenLastCalledWith({
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(10);
+    expect(mockDiscordChannel.send).toHaveBeenLastCalledWith({
       content: expect.stringMatching(/Achievement unlocked:/),
       files: expect.any(Array),
     });
@@ -232,10 +182,10 @@ describe('Book Club Bans', () => {
       messageId: '987654321',
       userId: '123456789',
     });
-    await client.emit('messageReactionAdd', reaction, user);
+    await mockDiscordClient.emit('messageReactionAdd', reaction, user);
 
     const interaction = createMockInteraction();
-    await client.emit('interactionCreate', interaction);
+    await mockDiscordClient.emit('interactionCreate', interaction);
 
     expect(interaction.reply).toHaveBeenCalledTimes(1);
     expect(interaction.reply).toHaveBeenCalledWith(
@@ -245,7 +195,7 @@ describe('Book Club Bans', () => {
 
   test('handles empty leaderboard', async () => {
     const interaction = createMockInteraction();
-    await client.emit('interactionCreate', interaction);
+    await mockDiscordClient.emit('interactionCreate', interaction);
 
     expect(interaction.reply).toHaveBeenCalledTimes(1);
     expect(interaction.reply).toHaveBeenCalledWith(
