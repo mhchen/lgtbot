@@ -221,7 +221,6 @@ export async function getTopMessages({
       messageId: kudosReactions.messageId,
       messageChannelId: kudosReactions.messageChannelId,
       messageAuthorId: kudosReactions.messageAuthorId,
-      guildId: kudosReactions.guildId,
       reactionCount: sql<number>`COUNT(*) AS reaction_count`,
     })
     .from(kudosReactions)

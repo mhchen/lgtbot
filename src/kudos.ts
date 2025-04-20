@@ -78,6 +78,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       const timeframe = interaction.options.getString('timeframe');
       const response = await handleTopCommand({
         timeframe: timeframe ?? undefined,
+        guildId: interaction.guildId,
       });
       await interaction.reply(response);
       break;
@@ -155,8 +156,10 @@ export async function handleLeaderboardCommand() {
 
 export async function handleTopCommand({
   timeframe = '7 days',
+  guildId,
 }: {
   timeframe?: string;
+  guildId: string | null;
 }) {
   const topMessages = await getTopMessages({ timeframe });
   const embed = new EmbedBuilder()
@@ -165,7 +168,7 @@ export async function handleTopCommand({
     .setDescription(
       topMessages
         .map((msg, index) => {
-          const messageLink = `https://discord.com/channels/${msg.guildId}/${msg.messageChannelId}/${msg.messageId}`;
+          const messageLink = `https://discord.com/channels/${guildId}/${msg.messageChannelId}/${msg.messageId}`;
           return `${index + 1}. <@${msg.messageAuthorId}> - ${
             msg.reactionCount
           } reactions - [Jump to message](${messageLink})`;
