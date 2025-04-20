@@ -3,7 +3,6 @@ import {
   MessageReaction,
   User,
   Client,
-  TextChannel,
   Events,
   ChatInputCommandInteraction,
   SlashCommandSubcommandGroupBuilder,
@@ -19,7 +18,6 @@ import {
 
 const LGT_EMOJI_NAME = 'lgt';
 
-// Command definitions
 export function getKudosCommands() {
   return (group: SlashCommandSubcommandGroupBuilder) =>
     group
@@ -61,7 +59,6 @@ export function getKudosCommands() {
 
 export async function handleCommand(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
-
   switch (subcommand) {
     case 'rank': {
       const targetUser = interaction.options.getUser('user');
@@ -305,7 +302,8 @@ export function registerKudosListeners(client: Client) {
 
       if (result.type === 'levelup') {
         const channel = reaction.message.channel;
-        if (channel instanceof TextChannel) {
+        if (channel.isTextBased() && 'send' in channel) {
+          console.log(result.embed.data.title);
           await channel.send({
             embeds: [result.embed],
           });

@@ -48,7 +48,6 @@ client.on('interactionCreate', (interaction) =>
 
     const group = interaction.options.getSubcommandGroup();
 
-    // Check permissions for twitch commands
     if (
       group === 'twitch' &&
       !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)

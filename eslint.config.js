@@ -39,6 +39,14 @@ export default [
         },
       ],
     },
+    overrides: [
+      {
+        files: ['**/*.test.ts', '**/*.test.js'],
+        rules: {
+          '@typescript-eslint/no-explicit-any': 'off',
+        },
+      },
+    ],
   },
   prettierConfig,
 ];

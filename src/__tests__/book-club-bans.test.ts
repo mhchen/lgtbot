@@ -11,6 +11,7 @@ import {
   mockDiscordClient,
   mockDiscordChannel,
   resetMockDiscordClient,
+  type MockInteraction,
 } from './mockDiscordClient';
 
 type MockReaction = {
@@ -26,22 +27,6 @@ type MockReaction = {
 type MockUser = {
   id: string;
   toString: () => string;
-};
-
-type MockInteraction = {
-  isChatInputCommand: () => boolean;
-  commandName: string;
-  options: {
-    getSubcommand: () => string;
-    getSubcommandGroup: () => string;
-  };
-  reply: ReturnType<typeof mock>;
-  guild: {
-    members: {
-      fetch: ReturnType<typeof mock>;
-      cache: Map<string, { id: string; displayName: string }>;
-    };
-  };
 };
 
 describe('Book Club Bans', () => {
