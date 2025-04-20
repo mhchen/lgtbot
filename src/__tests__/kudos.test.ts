@@ -1,17 +1,18 @@
-import { describe, expect, test, beforeEach, mock } from 'bun:test';
-import {
-  handleTopCommand,
-  handleCommand,
-  registerKudosListeners,
-} from '../kudos';
+import { describe, expect, test, beforeEach } from 'bun:test';
+import { handleCommand, registerKudosListeners } from '../kudos';
 import { db } from '../db/index';
 import { kudosReactions } from '../db/schema';
-import type { ChatInputCommandInteraction, Client } from 'discord.js';
+import type {
+  ChatInputCommandInteraction,
+  Client,
+  Message,
+  MessageReaction,
+} from 'discord.js';
 import { subDays } from 'date-fns';
 import {
   createMockUser,
   createMockMessage,
-  createMockReaction,
+  createMockReaction as createLgtMockReaction,
   mockDiscordClient,
   createMockInteraction as createLgtMockInteraction,
   resetMockDiscordClient,
@@ -29,6 +30,17 @@ function createMockInteraction({
     subcommandGroup: 'kudos',
     subcommand,
     options,
+  });
+}
+
+function createMockReaction({
+  message,
+}: {
+  message: Message;
+}): MessageReaction {
+  return createLgtMockReaction({
+    message,
+    emoji: 'lgt',
   });
 }
 
@@ -53,7 +65,9 @@ describe('kudos', () => {
     test('prevents self-kudos', async () => {
       const mockUser = createMockUser('user123');
       const selfKudosMessage = createMockMessage('user123');
-      const selfKudosReaction = createMockReaction(selfKudosMessage);
+      const selfKudosReaction = createMockReaction({
+        message: selfKudosMessage,
+      });
 
       await mockDiscordClient.emit(
         'messageReactionAdd',
@@ -98,7 +112,9 @@ describe('kudos', () => {
     test('handles level up', async () => {
       const mockUser = createMockUser('user123');
       const mockMessage = createMockMessage('author123');
-      const mockReaction = createMockReaction(mockMessage);
+      const mockReaction = createMockReaction({
+        message: mockMessage,
+      });
 
       // Add enough reactions to be close to level up (level 1 -> 2)
       // Need 50 points: 5 unique messages (40 points) + 1 new reaction (10 points) = 50 points
@@ -139,10 +155,12 @@ describe('kudos', () => {
     test('removes kudos reaction', async () => {
       const mockUser = createMockUser('user123');
       const mockMessage = createMockMessage('author123');
-      const mockReaction = createMockReaction(mockMessage);
+      const mockReaction = createMockReaction({
+        message: mockMessage,
+      });
 
       await db.insert(kudosReactions).values({
-        messageId: 'msg123',
+        messageId: mockMessage.id,
         messageChannelId: 'channel123',
         messageAuthorId: 'author123',
         reactorId: 'user123',

@@ -119,7 +119,6 @@ export async function handleBookclubCommand(interaction: Interaction) {
       await interaction.reply('Guild is null :s!');
       return;
     }
-
     await interaction.guild.members.fetch();
 
     const guildMembers = interaction.guild.members.cache;

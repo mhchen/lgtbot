@@ -65,9 +65,10 @@ export function createMockUser(id = '123'): User {
   } as unknown as User;
 }
 
+let messageId = 123;
 export function createMockMessage(authorId: string): Message {
   return {
-    id: 'msg123',
+    id: `${messageId++}`,
     channelId: 'channel123',
     author: createMockUser(authorId),
     guildId: 'guild123',
@@ -79,10 +80,16 @@ export function createMockMessage(authorId: string): Message {
   } as unknown as Message;
 }
 
-export function createMockReaction(message: Message): MessageReaction {
+export function createMockReaction({
+  message,
+  emoji,
+}: {
+  message: Message;
+  emoji: string;
+}): MessageReaction {
   const reaction = {
     message,
-    emoji: { name: 'lgt' },
+    emoji: { name: emoji },
     users: {
       remove: mock(),
     },
@@ -97,11 +104,13 @@ export function createMockInteraction({
   subcommand,
   options = {},
   userId = '123',
+  overrides = {},
 }: {
   subcommandGroup: string;
   subcommand: string;
   options?: Record<string, string>;
   userId?: string;
+  overrides?: Partial<MockInteraction>;
 }): MockInteraction {
   return {
     isChatInputCommand: () => true,
@@ -116,9 +125,19 @@ export function createMockInteraction({
     reply: mock(),
     guild: {
       members: {
-        fetch: mock(),
-        cache: new Map(),
+        fetch: mock(() => Promise.resolve()),
+        // Hardcoded to support book club bans, need some sort of way to generalize this better
+        cache: new Map([
+          [
+            '123456789',
+            {
+              id: '123456789',
+              displayName: 'TestUser',
+            },
+          ],
+        ]),
       },
     },
+    ...overrides,
   } as unknown as MockInteraction;
 }
