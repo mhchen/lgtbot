@@ -71,8 +71,8 @@ async function subscribeToStream({
       },
       transport: {
         method: 'webhook',
-        callback: `${process.env.TWITCH_WEBHOOK_URL!}/webhooks/twitch`,
-        secret: process.env.TWITCH_WEBHOOK_SECRET!,
+        callback: process.env.WEBHOOK_URL!,
+        secret: process.env.WEBHOOK_SECRET!,
       },
     },
     {
