@@ -13,7 +13,10 @@ import { eq, sql } from 'drizzle-orm';
 
 const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
-const MIKE_USER_ID = '356482549549236225';
+const BANHAMMER_WIELDERS = new Map<string, string>([
+  ['356482549549236225', 'Mike'],
+  ['303660795513012225', 'Bethany'],
+]);
 const BANHAMMER_EMOJI = 'banhammer';
 
 const achievementsMap = new Map<number, { title: string; subtitle: string }>([
@@ -70,7 +73,7 @@ const achievementsMap = new Map<number, { title: string; subtitle: string }>([
   ],
 ]);
 
-const MIKE_TITLES = [
+const WIELDER_TITLES = [
   'Supreme Ruler',
   'Grand Overlord',
   'Executive Bookmaster',
@@ -80,8 +83,8 @@ const MIKE_TITLES = [
   'Distinguished Leader',
 ];
 
-function getRandomMikeTitle(): string {
-  return MIKE_TITLES[Math.floor(Math.random() * MIKE_TITLES.length)];
+function getRandomWielderTitle(): string {
+  return WIELDER_TITLES[Math.floor(Math.random() * WIELDER_TITLES.length)];
 }
 
 export function getBookClubCommands() {
@@ -146,7 +149,10 @@ export async function handleBookclubCommand(interaction: Interaction) {
 
 export async function registerBookClubBansListeners(client: Client) {
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (user.id === MIKE_USER_ID && reaction.emoji.name === BANHAMMER_EMOJI) {
+    if (
+      BANHAMMER_WIELDERS.has(user.id) &&
+      reaction.emoji.name === BANHAMMER_EMOJI
+    ) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -184,7 +190,7 @@ export async function registerBookClubBansListeners(client: Client) {
         const banCount = newMessageIds.length;
         let messageContent = `<@${messageSenderId}> has received their ${banCount}${getSuffix(
           banCount
-        )} ban from LGT Book Club, by order of ${getRandomMikeTitle()} Mike. Their crimes against literature continue to stack.`;
+        )} ban from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}. Their crimes against literature continue to stack.`;
 
         const achievement = achievementsMap.get(banCount);
         if (achievement) {
@@ -210,7 +216,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .run();
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomMikeTitle()} Mike`
+          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}`
         );
       }
 
@@ -221,7 +227,10 @@ export async function registerBookClubBansListeners(client: Client) {
   });
 
   client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (user.id === MIKE_USER_ID && reaction.emoji.name === BANHAMMER_EMOJI) {
+    if (
+      BANHAMMER_WIELDERS.has(user.id) &&
+      reaction.emoji.name === BANHAMMER_EMOJI
+    ) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -260,7 +269,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .run();
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been brought back into ${getRandomMikeTitle()} Mike's good graces.`
+          `<@${messageSenderId}> has been brought back into ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}'s good graces.`
         );
       } else {
         db.update(bookClubBans)
