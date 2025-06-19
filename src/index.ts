@@ -16,6 +16,7 @@ import {
   handleCommand as handleKudosCommand,
 } from './kudos';
 import { handleCommand as handleTwitchCommand } from './twitch';
+import { registerWeeklyWinsListeners } from './weekly-wins';
 
 const client = new Client({
   intents: [
@@ -24,7 +25,12 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
   ],
-  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction,
+    Partials.GuildMember,
+  ],
 });
 
 client.once('ready', async () => {
@@ -33,6 +39,7 @@ client.once('ready', async () => {
   registerBookClubBansListeners(client);
   registerNoelRepliesListeners(client);
   registerKudosListeners(client);
+  registerWeeklyWinsListeners(client);
   startWebhookServer({
     client,
     channelId: process.env.NOTIFICATION_CHANNEL_ID!,
