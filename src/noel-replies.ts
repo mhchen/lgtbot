@@ -1,6 +1,7 @@
 import { Client, TextChannel } from 'discord.js';
 
 const WATERCOOLER_CHANNEL_ID = '964903664265359433';
+const INFERIOR_WATERCOOLER_CHANNEL_ID = '1384278987597025340';
 const NOEL_USER_ID = '204799401699442689';
 
 function getEasternTime(): string {
@@ -16,18 +17,19 @@ function getEasternTime(): string {
 export async function registerNoelRepliesListeners(client: Client) {
   client.on('messageCreate', async (message) => {
     if (
-      message.channelId === WATERCOOLER_CHANNEL_ID &&
+      (message.channelId === WATERCOOLER_CHANNEL_ID ||
+        message.channelId === INFERIOR_WATERCOOLER_CHANNEL_ID) &&
       message.author.id === NOEL_USER_ID
     ) {
-      if (Math.random() >= 0.005) {
+      if (message.channelId === WATERCOOLER_CHANNEL_ID && Math.random() >= 0.005) {
         return;
       }
 
-      const watercoolerChannel = (await client.channels.fetch(
-        WATERCOOLER_CHANNEL_ID
+      const channel = (await client.channels.fetch(
+        message.channelId
       )) as TextChannel;
 
-      await watercoolerChannel.send(`<@${NOEL_USER_ID}> ${getEasternTime()}`);
+      await channel.send(`<@${NOEL_USER_ID}> ${getEasternTime()}`);
     }
   });
 
