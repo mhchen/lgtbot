@@ -48,3 +48,27 @@ export const kudosReactions = sqliteTable(
     };
   }
 );
+
+export const goals = sqliteTable(
+  'goals',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: text('user_id').notNull(),
+    title: text('title').notNull(),
+    targetCount: integer('target_count').notNull(),
+    completionCount: integer('completion_count').notNull().default(0),
+    weekIdentifier: text('week_identifier').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+  },
+  (table) => ({
+    userWeekIdx: index('goals_user_week_idx').on(
+      table.userId,
+      table.weekIdentifier
+    ),
+    weekIdx: index('goals_week_idx').on(table.weekIdentifier),
+    activeIdx: index('goals_active_idx').on(table.deletedAt),
+  })
+);

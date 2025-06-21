@@ -1,7 +1,7 @@
 import { Client, Events, GuildMember, TextChannel } from 'discord.js';
+import { WEEKLY_WINS_CHAT_CHANNEL_ID } from './constants';
 
 const WEEKLY_WINS_ROLE_ID = '1364069953459720192';
-const WEEKLY_WINS_CHAT_CHANNEL_ID = '1364070715740917782';
 const WEEKLY_WINS_POSTS_CHANNEL_ID = '1384556401761714236';
 
 export async function registerWeeklyWinsListeners(client: Client) {

@@ -21,7 +21,10 @@ export async function registerNoelRepliesListeners(client: Client) {
         message.channelId === INFERIOR_WATERCOOLER_CHANNEL_ID) &&
       message.author.id === NOEL_USER_ID
     ) {
-      if (message.channelId === WATERCOOLER_CHANNEL_ID && Math.random() >= 0.005) {
+      if (
+        message.channelId === WATERCOOLER_CHANNEL_ID &&
+        Math.random() >= 0.005
+      ) {
         return;
       }
 

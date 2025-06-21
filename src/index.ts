@@ -17,6 +17,7 @@ import {
 } from './kudos';
 import { handleCommand as handleTwitchCommand } from './twitch';
 import { registerWeeklyWinsListeners } from './weekly-wins';
+import { handleGoalsCommand, handleGoalInteraction } from './goals';
 
 const client = new Client({
   intents: [
@@ -48,36 +49,42 @@ client.once('ready', async () => {
 
 client.on('interactionCreate', (interaction) =>
   (async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+    if (interaction.isChatInputCommand()) {
+      const { commandName } = interaction;
+      if (commandName !== 'lgt') return;
 
-    const { commandName } = interaction;
-    if (commandName !== 'lgt') return;
+      const group = interaction.options.getSubcommandGroup();
 
-    const group = interaction.options.getSubcommandGroup();
+      if (
+        group === 'twitch' &&
+        !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)
+      ) {
+        await interaction.reply({
+          content: 'You need moderator permissions to use this command.',
+          ephemeral: true,
+        });
+        return;
+      }
 
-    if (
-      group === 'twitch' &&
-      !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)
-    ) {
-      await interaction.reply({
-        content: 'You need moderator permissions to use this command.',
-        ephemeral: true,
-      });
-      return;
-    }
+      switch (group) {
+        case 'kudos':
+          await handleKudosCommand(interaction);
+          break;
 
-    switch (group) {
-      case 'kudos':
-        await handleKudosCommand(interaction);
-        break;
+        case 'bookclub':
+          await handleBookclubCommand(interaction);
+          break;
 
-      case 'bookclub':
-        await handleBookclubCommand(interaction);
-        break;
+        case 'twitch':
+          await handleTwitchCommand(interaction);
+          break;
 
-      case 'twitch':
-        await handleTwitchCommand(interaction);
-        break;
+        case 'goals':
+          await handleGoalsCommand(interaction);
+          break;
+      }
+    } else {
+      await handleGoalInteraction(interaction);
     }
   })(interaction).catch(console.error)
 );

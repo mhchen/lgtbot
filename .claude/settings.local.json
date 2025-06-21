@@ -3,7 +3,10 @@
     "allow": [
       "Bash(bun run lint:*)",
       "Bash(bun run:*)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(sqlite3:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }
