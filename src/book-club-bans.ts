@@ -6,6 +6,7 @@ import {
   type Interaction,
   SlashCommandSubcommandGroupBuilder,
 } from 'discord.js';
+import { logger } from './logger';
 import { db } from './db/index';
 import path from 'path';
 import { bookClubBans } from './db/schema';
@@ -159,7 +160,7 @@ export async function registerBookClubBansListeners(client: Client) {
       }
       const messageSenderId = message.author?.id;
       if (!messageSenderId) {
-        console.log('Message sender ID not found.');
+        logger.warn('Message sender ID not found for banhammer reaction');
         return;
       }
 
@@ -220,7 +221,7 @@ export async function registerBookClubBansListeners(client: Client) {
         );
       }
 
-      console.log(
+      logger.info(
         `User ${messageSenderId} has been banned for message ${messageId}.`
       );
     }
@@ -237,7 +238,7 @@ export async function registerBookClubBansListeners(client: Client) {
       }
       const messageSenderId = message.author?.id;
       if (!messageSenderId) {
-        console.log('Message sender ID not found.');
+        logger.warn('Message sender ID not found for banhammer removal');
         return;
       }
       const messageId = message.id;
@@ -287,13 +288,13 @@ export async function registerBookClubBansListeners(client: Client) {
         );
       }
 
-      console.log(
+      logger.info(
         `Ban removed for user ${messageSenderId}, message ${messageId}. Remaining bans: ${newMessageIds.length}`
       );
     }
   });
 
-  console.log('Book club bans listeners registered');
+  logger.info('Book club bans listeners registered');
 }
 
 function getSuffix(num: number): string {

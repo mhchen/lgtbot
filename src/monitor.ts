@@ -6,6 +6,7 @@ import {
   TextChannel,
   type APIEmbedField,
 } from 'discord.js';
+import { logger } from './logger';
 import { getStreamInfo, getUserInfo } from './twitch';
 
 function verifyTwitchSignature(req: Request, buf: Buffer) {
@@ -89,6 +90,6 @@ export function startWebhookServer({
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
-    console.log(`Webhook server listening on port ${port}`);
+    logger.info(`Webhook server listening on port ${port}`);
   });
 }

@@ -3,10 +3,10 @@ import {
   SlashCommandSubcommandGroupBuilder,
   ChatInputCommandInteraction,
 } from 'discord.js';
+import { logger } from './logger';
 import { db } from './db/index';
 import { twitchSubscriptions } from './db/schema';
 import { eq } from 'drizzle-orm';
-import pc from 'picocolors';
 
 interface TwitchStreamInfo {
   game_name: string;
@@ -221,11 +221,9 @@ function deleteSubscription({ username }: { username: string }) {
 export async function handleCommand(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
 
-  console.log(
-    'Twitch command received:',
-    pc.yellowBright(subcommand),
-    'with username:',
-    pc.cyanBright(interaction.options.getString('username')!)
+  logger.info(
+    { subcommand, username: interaction.options.getString('username') },
+    'Twitch command received'
   );
 
   switch (subcommand) {

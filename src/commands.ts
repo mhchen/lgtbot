@@ -1,4 +1,5 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { logger } from './logger';
 import { getKudosCommands } from './kudos';
 import { getBookClubCommands } from './book-club-bans';
 import { getTwitchCommands } from './twitch';
@@ -24,6 +25,6 @@ export async function registerCommands() {
       body: commands,
     });
   } catch (error) {
-    console.error('Error registering commands:', error);
+    logger.error(error, 'Error registering commands');
   }
 }

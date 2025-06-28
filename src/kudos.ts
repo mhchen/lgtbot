@@ -7,6 +7,7 @@ import {
   ChatInputCommandInteraction,
   SlashCommandSubcommandGroupBuilder,
 } from 'discord.js';
+import { logger } from './logger';
 import {
   addKudosReaction,
   // getDailyReactionCount,
@@ -308,14 +309,14 @@ export function registerKudosListeners(client: Client) {
       if (result.type === 'levelup') {
         const channel = reaction.message.channel;
         if (channel.isTextBased() && 'send' in channel) {
-          console.log(result.embed.data.title);
+          logger.info(result.embed.data.title, 'Level up announcement');
           await channel.send({
             embeds: [result.embed],
           });
         }
       }
     } catch (error) {
-      console.error('Error handling kudos reaction:', error);
+      logger.error(error, 'Error handling kudos reaction');
     }
   });
 
@@ -334,9 +335,9 @@ export function registerKudosListeners(client: Client) {
 
       await handleKudosReactionRemove(reaction, user as User);
     } catch (error) {
-      console.error('Error handling kudos reaction removal:', error);
+      logger.error(error, 'Error handling kudos reaction removal');
     }
   });
 
-  console.log('Kudos listeners registered');
+  logger.info('Kudos listeners registered');
 }

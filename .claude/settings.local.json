@@ -6,7 +6,9 @@
       "Bash(bun test:*)",
       "Bash(sqlite3:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(rg:*)",
+      "Bash(bun add:*)"
     ],
     "deny": []
   }

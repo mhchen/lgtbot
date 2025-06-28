@@ -4,6 +4,7 @@ import {
   Partials,
   PermissionFlagsBits,
 } from 'discord.js';
+import { logger } from './logger';
 import { registerCommands } from './commands';
 import { startWebhookServer } from './monitor';
 import {
@@ -35,7 +36,7 @@ const client = new Client({
 });
 
 client.once('ready', async () => {
-  console.log('Bot is ready!');
+  logger.info('Bot is ready!');
   await registerCommands();
   registerBookClubBansListeners(client);
   registerNoelRepliesListeners(client);
@@ -86,7 +87,9 @@ client.on('interactionCreate', (interaction) =>
     } else {
       await handleGoalInteraction(interaction);
     }
-  })(interaction).catch(console.error)
+  })(interaction).catch((error) =>
+    logger.error(error, 'Error handling interaction')
+  )
 );
 
 client.login(process.env.DISCORD_TOKEN);

@@ -14,6 +14,7 @@ import {
   ButtonInteraction,
   type Interaction,
 } from 'discord.js';
+import { logger } from './logger';
 import {
   createGoal,
   getUserGoals,
@@ -137,7 +138,7 @@ export async function handleGoalModalSubmit(
       content: `<@${interaction.user.id}> set a goal: **${title}** (${target} times this week)`,
     });
   } catch (error) {
-    console.error('Error creating goal:', error);
+    logger.error(error, 'Error creating goal');
     await interaction.reply({
       content: '❌ Failed to create goal. Please try again.',
       ephemeral: true,
@@ -186,7 +187,7 @@ async function handleCheckIn(interaction: ChatInputCommandInteraction) {
       ephemeral: true,
     });
   } catch (error) {
-    console.error('Error handling check-in:', error);
+    logger.error(error, 'Error handling check-in');
     await interaction.reply({
       content: '❌ Failed to load goals. Please try again.',
       ephemeral: true,
@@ -228,7 +229,7 @@ export async function handleGoalCheckInSelect(
       content: message,
     });
   } catch (error) {
-    console.error('Error processing check-in:', error);
+    logger.error(error, 'Error processing check-in');
     await interaction.reply({
       content: '❌ Failed to check in. Please try again.',
       ephemeral: true,
@@ -266,7 +267,7 @@ async function handleListOwnGoals(interaction: ChatInputCommandInteraction) {
       embeds: [embed],
     });
   } catch (error) {
-    console.error('Error listing goals:', error);
+    logger.error(error, 'Error listing goals');
     await interaction.reply({
       content: '❌ Failed to load goals. Please try again.',
       ephemeral: true,
@@ -321,7 +322,7 @@ async function handleTeamGoals(interaction: ChatInputCommandInteraction) {
       embeds: [embed],
     });
   } catch (error) {
-    console.error('Error loading team goals:', error);
+    logger.error(error, 'Error loading team goals');
     await interaction.reply({
       content: '❌ Failed to load team goals. Please try again.',
       ephemeral: true,
@@ -366,7 +367,7 @@ async function handleDeleteGoal(interaction: ChatInputCommandInteraction) {
       ephemeral: true,
     });
   } catch (error) {
-    console.error('Error handling delete goal:', error);
+    logger.error(error, 'Error handling delete goal');
     await interaction.reply({
       content: '❌ Failed to load goals. Please try again.',
       ephemeral: true,
@@ -411,7 +412,7 @@ export async function handleGoalDeleteSelect(
       ephemeral: true,
     });
   } catch (error) {
-    console.error('Error processing delete selection:', error);
+    logger.error(error, 'Error processing delete selection');
     await interaction.reply({
       content: '❌ Failed to process deletion. Please try again.',
       ephemeral: true,
@@ -441,7 +442,7 @@ export async function handleGoalDeleteConfirm(interaction: ButtonInteraction) {
       content: `<@${interaction.user.id}> removed their goal: **${goal.title}**`,
     });
   } catch (error) {
-    console.error('Error confirming goal deletion:', error);
+    logger.error(error, 'Error confirming goal deletion');
     await interaction.reply({
       content: '❌ Failed to delete goal. Please try again.',
       ephemeral: true,

@@ -1,4 +1,5 @@
 import { Client, Events, GuildMember, TextChannel } from 'discord.js';
+import { logger } from './logger';
 import { WEEKLY_WINS_CHAT_CHANNEL_ID } from './constants';
 
 const WEEKLY_WINS_ROLE_ID = '1364069953459720192';
@@ -17,11 +18,11 @@ export async function registerWeeklyWinsListeners(client: Client) {
         await sendWeeklyWinsWelcome(client, newMember);
       }
     } catch (error) {
-      console.error('Error handling Weekly Wins role update:', error);
+      logger.error(error, 'Error handling Weekly Wins role update');
     }
   });
 
-  console.log('Weekly Wins listeners registered');
+  logger.info('Weekly Wins listeners registered');
 }
 
 async function sendWeeklyWinsWelcome(client: Client, member: GuildMember) {
@@ -31,7 +32,7 @@ async function sendWeeklyWinsWelcome(client: Client, member: GuildMember) {
     )) as TextChannel;
 
     if (!chatChannel) {
-      console.error('Weekly Wins chat channel not found');
+      logger.error('Weekly Wins chat channel not found');
       return;
     }
 
@@ -41,10 +42,10 @@ Please post your updates in <#${WEEKLY_WINS_POSTS_CHANNEL_ID}>. Feel free to pos
 
     await chatChannel.send(message);
 
-    console.log(
+    logger.info(
       `Weekly Wins welcome message sent for user ${member.user.username} (${member.id})`
     );
   } catch (error) {
-    console.error('Error sending Weekly Wins welcome message:', error);
+    logger.error(error, 'Error sending Weekly Wins welcome message');
   }
 }

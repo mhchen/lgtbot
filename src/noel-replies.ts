@@ -1,4 +1,5 @@
 import { Client, TextChannel } from 'discord.js';
+import { logger } from './logger';
 
 const WATERCOOLER_CHANNEL_ID = '964903664265359433';
 const INFERIOR_WATERCOOLER_CHANNEL_ID = '1384278987597025340';
@@ -36,5 +37,5 @@ export async function registerNoelRepliesListeners(client: Client) {
     }
   });
 
-  console.log('Noel replies listeners registered');
+  logger.info('Noel replies listeners registered');
 }
