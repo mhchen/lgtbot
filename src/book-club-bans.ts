@@ -13,7 +13,7 @@ import { bookClubBans } from './db/schema';
 import { eq, sql } from 'drizzle-orm';
 
 const BOOK_CLUB_CHANNEL_ID =
-  process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
+  process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1390098162256969818';
 const BANHAMMER_WIELDERS = new Map<string, string>([
   ['356482549549236225', 'Mike'],
   ['303660795513012225', 'Bethany'],
