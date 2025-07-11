@@ -6,7 +6,6 @@ const WATERCOOLER_CHANNEL_ID = '964903664265359433';
 const acronyms = new Map<string, string>([
   ['afaik', 'as far as I know'],
   ['afk', 'away from keyboard'],
-  ['be', 'backend'],
   ['brb', 'be right back'],
   ['bro', 'brother'],
   ['btw', 'by the way'],
