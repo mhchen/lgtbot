@@ -2,8 +2,11 @@ import { Client, Message } from 'discord.js';
 import { logger } from './logger';
 
 const WATERCOOLER_CHANNEL_ID = '964903664265359433';
+const TECHNICAL_DISCUSSION_CHANNEL_ID = '1068935198567317614';
 
-const conversationalAcronyms = new Map<string, string>([
+type AcronymMap = Map<string, string>;
+
+const conversationalAcronyms: AcronymMap = new Map([
   ['afaik', 'as far as I know'],
   ['afk', 'away from keyboard'],
   ['brb', 'be right back'],
@@ -67,7 +70,7 @@ const conversationalAcronyms = new Map<string, string>([
   ['yw', "you're welcome"],
 ]);
 
-const technicalAcronyms = new Map<string, string>([
+const technicalAcronyms: AcronymMap = new Map([
   [
     '2fa',
     '[two-factor authentication](https://en.wikipedia.org/wiki/Multi-factor_authentication) - *security process requiring two different authentication factors*',
@@ -149,20 +152,8 @@ const technicalAcronyms = new Map<string, string>([
     '[distributed denial of service](https://en.wikipedia.org/wiki/Denial-of-service_attack#Distributed_attack) - *attack using multiple compromised systems*',
   ],
   [
-    'dl',
-    '[deep learning](https://en.wikipedia.org/wiki/Deep_learning) - *machine learning using artificial neural networks*',
-  ],
-  [
     'dns',
     '[domain name system](https://en.wikipedia.org/wiki/Domain_Name_System) - *hierarchical naming system for internet resources*',
-  ],
-  [
-    'dom',
-    '[document object model](https://en.wikipedia.org/wiki/Document_Object_Model) - *programming interface for web documents*',
-  ],
-  [
-    'dos',
-    '[denial of service](https://en.wikipedia.org/wiki/Denial-of-service_attack) - *attack attempting to make service unavailable*',
   ],
   [
     'dry',
@@ -418,12 +409,7 @@ const technicalAcronyms = new Map<string, string>([
   ],
 ]);
 
-const acronyms = new Map<string, string>([
-  ...conversationalAcronyms,
-  ...technicalAcronyms,
-]);
-
-function detectAcronyms(content: string): string[] {
+function detectAcronyms(content: string, acronyms: AcronymMap): string[] {
   const words = content.toLowerCase().split(/\b/);
   const detectedAcronyms = words.filter((word) => acronyms.has(word));
 
@@ -444,9 +430,21 @@ export function registerAcronymListeners(client: Client): void {
     try {
       if (message.author.bot) return;
 
-      if (message.channel.id !== WATERCOOLER_CHANNEL_ID) return;
+      let acronyms: AcronymMap;
+      let detectedAcronyms: string[] = [];
+      switch (message.channel.id) {
+        case WATERCOOLER_CHANNEL_ID:
+          acronyms = conversationalAcronyms;
 
-      const detectedAcronyms = detectAcronyms(message.content);
+          break;
+        case TECHNICAL_DISCUSSION_CHANNEL_ID:
+          acronyms = technicalAcronyms;
+          break;
+        default:
+          return;
+      }
+
+      detectedAcronyms = detectAcronyms(message.content, acronyms);
 
       if (detectedAcronyms.length > 0) {
         const definitions = detectedAcronyms
