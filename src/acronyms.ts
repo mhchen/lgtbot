@@ -61,6 +61,7 @@ const acronyms = new Map<string, string>([
   ['ui', 'user interface'],
   ['ux', 'user experience'],
   ['wtf', 'what the fuck'],
+  ['wym', 'what you mean'],
   ['wyd', 'what you doing'],
   ['yolo', 'you only live once'],
   ['yw', "you're welcome"],
@@ -70,7 +71,14 @@ function detectAcronyms(content: string): string[] {
   const words = content.toLowerCase().split(/\b/);
   const detectedAcronyms = words.filter((word) => acronyms.has(word));
 
-  return detectedAcronyms;
+  const wordsWithSpaces = content.toLowerCase().split(/\s+/);
+  const detectedAcronymsWithSpaces = wordsWithSpaces.filter((word) =>
+    acronyms.has(word)
+  );
+
+  return Array.from(
+    new Set([...detectedAcronyms, ...detectedAcronymsWithSpaces])
+  );
 }
 
 export function registerAcronymListeners(client: Client): void {
