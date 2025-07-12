@@ -435,7 +435,6 @@ export function registerAcronymListeners(client: Client): void {
       switch (message.channel.id) {
         case WATERCOOLER_CHANNEL_ID:
           acronyms = conversationalAcronyms;
-
           break;
         case TECHNICAL_DISCUSSION_CHANNEL_ID:
           acronyms = technicalAcronyms;
