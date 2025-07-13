@@ -431,7 +431,6 @@ export function registerAcronymListeners(client: Client): void {
       if (message.author.bot) return;
 
       let acronyms: AcronymMap;
-      let detectedAcronyms: string[] = [];
       switch (message.channel.id) {
         case WATERCOOLER_CHANNEL_ID:
           acronyms = conversationalAcronyms;
@@ -443,7 +442,7 @@ export function registerAcronymListeners(client: Client): void {
           return;
       }
 
-      detectedAcronyms = detectAcronyms(message.content, acronyms);
+      const detectedAcronyms = detectAcronyms(message.content, acronyms);
 
       if (detectedAcronyms.length > 0) {
         const definitions = detectedAcronyms
