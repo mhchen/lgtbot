@@ -181,4 +181,38 @@ describe('Book Club Bans', () => {
       'No one has been banned from book club yet! 📚'
     );
   });
+
+  test('bans a user when Ryan (assistant) adds banhammer reaction', async () => {
+    const assistantUser = createMockUser('219283881390637056'); // Ryan's ID
+    const reaction = createMockReaction({
+      userId: '123456789',
+    });
+    await mockDiscordClient.emit('messageReactionAdd', reaction, assistantUser);
+
+    const bans = db.select().from(bookClubBans).all();
+    expect(bans).toHaveLength(1);
+    expect(bans[0].discordUserId).toBe('123456789');
+    expect(bans[0].discordMessageIds).toBe(reaction.message.id);
+
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(1);
+    expect(mockDiscordChannel.send).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^<@123456789> has been banned.*Assistant to the.*Ryan/
+      )
+    );
+  });
+
+  test('assistant titles are properly formatted with "Assistant to the" prefix', async () => {
+    const assistantUser = createMockUser('219283881390637056'); // Ryan's ID
+    const reaction = createMockReaction({
+      userId: '123456789',
+    });
+    await mockDiscordClient.emit('messageReactionAdd', reaction, assistantUser);
+
+    expect(mockDiscordChannel.send).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /Assistant to the (Supreme Ruler|Grand Overlord|Executive Bookmaster|Literary Sovereign|Chief Reading Officer|Book Emperor|Distinguished Leader) Ryan/
+      )
+    );
+  });
 });

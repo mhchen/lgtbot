@@ -18,6 +18,10 @@ const BANHAMMER_WIELDERS = new Map<string, string>([
   ['356482549549236225', 'Mike'],
   ['303660795513012225', 'Bethany'],
 ]);
+
+const BANHAMMER_WIELDERS_ASSISTANTS = new Map<string, string>([
+  ['219283881390637056', 'Ryan'],
+]);
 const BANHAMMER_EMOJI = 'banhammer';
 
 const achievementsMap = new Map<number, { title: string; subtitle: string }>([
@@ -88,6 +92,37 @@ function getRandomWielderTitle(): string {
   return WIELDER_TITLES[Math.floor(Math.random() * WIELDER_TITLES.length)];
 }
 
+function getRandomWielderAssistantTitle(): string {
+  const wielderTitle = getRandomWielderTitle();
+  return `Assistant to the ${wielderTitle}`;
+}
+
+function getUserTypeAndName(
+  userId: string
+): { name: string; title: string } | null {
+  if (BANHAMMER_WIELDERS.has(userId)) {
+    return {
+      name: BANHAMMER_WIELDERS.get(userId)!,
+      title: getRandomWielderTitle(),
+    };
+  }
+
+  if (BANHAMMER_WIELDERS_ASSISTANTS.has(userId)) {
+    return {
+      name: BANHAMMER_WIELDERS_ASSISTANTS.get(userId)!,
+      title: getRandomWielderAssistantTitle(),
+    };
+  }
+
+  return null;
+}
+
+function isAuthorizedUser(userId: string): boolean {
+  return (
+    BANHAMMER_WIELDERS.has(userId) || BANHAMMER_WIELDERS_ASSISTANTS.has(userId)
+  );
+}
+
 export function getBookClubCommands() {
   return (group: SlashCommandSubcommandGroupBuilder) =>
     group
@@ -150,10 +185,7 @@ export async function handleBookclubCommand(interaction: Interaction) {
 
 export async function registerBookClubBansListeners(client: Client) {
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (
-      BANHAMMER_WIELDERS.has(user.id) &&
-      reaction.emoji.name === BANHAMMER_EMOJI
-    ) {
+    if (isAuthorizedUser(user.id) && reaction.emoji.name === BANHAMMER_EMOJI) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -176,6 +208,9 @@ export async function registerBookClubBansListeners(client: Client) {
         BOOK_CLUB_CHANNEL_ID
       )) as TextChannel;
 
+      const userInfo = getUserTypeAndName(user.id);
+      if (!userInfo) return;
+
       if (existingBan) {
         const newMessageIds = [
           ...existingBan.discordMessageIds.split(','),
@@ -191,7 +226,7 @@ export async function registerBookClubBansListeners(client: Client) {
         const banCount = newMessageIds.length;
         let messageContent = `<@${messageSenderId}> has received their ${banCount}${getSuffix(
           banCount
-        )} ban from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}. Their crimes against literature continue to stack.`;
+        )} ban from LGT Book Club, by order of ${userInfo.title} ${userInfo.name}. Their crimes against literature continue to stack.`;
 
         const achievement = achievementsMap.get(banCount);
         if (achievement) {
@@ -217,7 +252,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .run();
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}`
+          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${userInfo.title} ${userInfo.name}`
         );
       }
 
@@ -228,10 +263,7 @@ export async function registerBookClubBansListeners(client: Client) {
   });
 
   client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (
-      BANHAMMER_WIELDERS.has(user.id) &&
-      reaction.emoji.name === BANHAMMER_EMOJI
-    ) {
+    if (isAuthorizedUser(user.id) && reaction.emoji.name === BANHAMMER_EMOJI) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -264,13 +296,16 @@ export async function registerBookClubBansListeners(client: Client) {
 
       const newMessageIds = messageIds.filter((id: string) => id !== messageId);
 
+      const userInfo = getUserTypeAndName(user.id);
+      if (!userInfo) return;
+
       if (newMessageIds.length === 0) {
         db.delete(bookClubBans)
           .where(eq(bookClubBans.discordUserId, messageSenderId))
           .run();
 
         await bookClubChannel.send(
-          `<@${messageSenderId}> has been brought back into ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}'s good graces.`
+          `<@${messageSenderId}> has been brought back into ${userInfo.title} ${userInfo.name}'s good graces.`
         );
       } else {
         db.update(bookClubBans)
