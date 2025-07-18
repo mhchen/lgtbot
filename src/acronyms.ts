@@ -451,6 +451,10 @@ export function registerAcronymListeners(client: Client): void {
       const detectedAcronyms = detectAcronyms(message.content, acronyms);
 
       if (detectedAcronyms.length > 0) {
+        if (Math.random() >= 0.1) {
+          return;
+        }
+
         const definitions = detectedAcronyms
           .map((acronym) => `${acronym} = ${acronyms.get(acronym)}`)
           .join('\n');
