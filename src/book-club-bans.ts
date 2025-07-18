@@ -93,11 +93,10 @@ function getRandomWielderTitle(): string {
 }
 
 function getRandomWielderAssistantTitle(): string {
-  const wielderTitle = getRandomWielderTitle();
-  return `Assistant to the ${wielderTitle}`;
+  return `Assistant to the ${getRandomWielderTitle()}`;
 }
 
-function getUserTypeAndName(
+function getBanhammerWielderNameAndTitle(
   userId: string
 ): { name: string; title: string } | null {
   if (BANHAMMER_WIELDERS.has(userId)) {
@@ -117,7 +116,7 @@ function getUserTypeAndName(
   return null;
 }
 
-function isAuthorizedUser(userId: string): boolean {
+function isBanhammerWielder(userId: string): boolean {
   return (
     BANHAMMER_WIELDERS.has(userId) || BANHAMMER_WIELDERS_ASSISTANTS.has(userId)
   );
@@ -185,7 +184,10 @@ export async function handleBookclubCommand(interaction: Interaction) {
 
 export async function registerBookClubBansListeners(client: Client) {
   client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (isAuthorizedUser(user.id) && reaction.emoji.name === BANHAMMER_EMOJI) {
+    if (
+      isBanhammerWielder(user.id) &&
+      reaction.emoji.name === BANHAMMER_EMOJI
+    ) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -208,7 +210,7 @@ export async function registerBookClubBansListeners(client: Client) {
         BOOK_CLUB_CHANNEL_ID
       )) as TextChannel;
 
-      const userInfo = getUserTypeAndName(user.id);
+      const userInfo = getBanhammerWielderNameAndTitle(user.id);
       if (!userInfo) return;
 
       if (existingBan) {
@@ -263,7 +265,10 @@ export async function registerBookClubBansListeners(client: Client) {
   });
 
   client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (isAuthorizedUser(user.id) && reaction.emoji.name === BANHAMMER_EMOJI) {
+    if (
+      getBanhammerWielderNameAndTitle(user.id) &&
+      reaction.emoji.name === BANHAMMER_EMOJI
+    ) {
       let { message } = reaction;
       if (message.partial) {
         message = await message.fetch();
@@ -296,7 +301,7 @@ export async function registerBookClubBansListeners(client: Client) {
 
       const newMessageIds = messageIds.filter((id: string) => id !== messageId);
 
-      const userInfo = getUserTypeAndName(user.id);
+      const userInfo = getBanhammerWielderNameAndTitle(user.id);
       if (!userInfo) return;
 
       if (newMessageIds.length === 0) {
