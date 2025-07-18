@@ -183,21 +183,28 @@ describe('Book Club Bans', () => {
   });
 
   test('bans a user when Ryan (assistant) adds banhammer reaction', async () => {
-    const assistantUser = createMockUser('219283881390637056'); // Ryan's ID
+    const RYANS_DISCORD_USER_ID = '219283881390637056';
+    const TEST_USERS_DISCORD_USER_ID = '123456789';
+    const assistantUser = createMockUser(RYANS_DISCORD_USER_ID);
     const reaction = createMockReaction({
-      userId: '123456789',
+      userId: TEST_USERS_DISCORD_USER_ID,
     });
-    await mockDiscordClient.emit('messageReactionAdd', reaction, assistantUser);
+    await mockDiscordClient.emit(
+      'messageReactionAdd',
+      reaction,
+      assistantUser,
+      user
+    );
 
     const bans = db.select().from(bookClubBans).all();
     expect(bans).toHaveLength(1);
-    expect(bans[0].discordUserId).toBe('123456789');
+    expect(bans[0].discordUserId).toBe(TEST_USERS_DISCORD_USER_ID);
     expect(bans[0].discordMessageIds).toBe(reaction.message.id);
 
     expect(mockDiscordChannel.send).toHaveBeenCalledTimes(1);
     expect(mockDiscordChannel.send).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^<@123456789> has been banned.*Assistant to the.*Ryan/
+        new RegExp(`^<@${TEST_USERS_DISCORD_USER_ID}> has been banned`)
       )
     );
   });
@@ -207,12 +214,22 @@ describe('Book Club Bans', () => {
     const reaction = createMockReaction({
       userId: '123456789',
     });
+    const assistantTitles = [
+      'Supreme Ruler',
+      'Grand Overlord',
+      'Executive Bookmaster',
+      'Literary Sovereign',
+      'Chief Reading Officer',
+      'Book Emperor',
+      'Distinguished Leader',
+    ];
+
     await mockDiscordClient.emit('messageReactionAdd', reaction, assistantUser);
 
-    expect(mockDiscordChannel.send).toHaveBeenCalledWith(
-      expect.stringMatching(
-        /Assistant to the (Supreme Ruler|Grand Overlord|Executive Bookmaster|Literary Sovereign|Chief Reading Officer|Book Emperor|Distinguished Leader) Ryan/
-      )
+    const actualMessage = mockDiscordChannel.send.mock.calls[0][0];
+    const containsAssistantTitle = assistantTitles.some((title) =>
+      actualMessage.includes(`Assistant to the ${title} Ryan`)
     );
+    expect(containsAssistantTitle).toBe(true);
   });
 });
