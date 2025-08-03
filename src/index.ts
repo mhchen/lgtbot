@@ -20,6 +20,7 @@ import { handleCommand as handleTwitchCommand } from './twitch';
 import { registerWeeklyWinsListeners } from './weekly-wins';
 import { handleGoalsCommand, handleGoalInteraction } from './goals';
 import { registerAcronymListeners } from './acronyms';
+import { registerRyanAstroShillListeners } from './ryan-astro-ping';
 
 const client = new Client({
   intents: [
@@ -45,6 +46,7 @@ client.once('ready', async () => {
   registerKudosListeners(client);
   registerWeeklyWinsListeners(client);
   registerAcronymListeners(client);
+  registerRyanAstroShillListeners(client);
   startWebhookServer({
     client,
     channelId: process.env.NOTIFICATION_CHANNEL_ID!,
