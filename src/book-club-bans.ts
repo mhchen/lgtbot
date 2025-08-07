@@ -202,19 +202,9 @@ export async function registerBookClubBansListeners(client: Client) {
         const achievement = achievementsMap.get(banCount);
         if (achievement) {
           messageContent += `\n\n🏆 **Achievement unlocked:** "${achievement.title}"\n*${achievement.subtitle}*`;
-          await bookClubChannel.send({
-            content: messageContent,
-            files: achievement
-              ? [
-                  new AttachmentBuilder(
-                    path.join(__dirname, 'cheevos', `${banCount}-bans.png`)
-                  ),
-                ]
-              : undefined,
-          });
         }
 
-        await bookClubBansChannel.send({
+        const messagePayload = {
           content: messageContent,
           files: achievement
             ? [
@@ -223,7 +213,13 @@ export async function registerBookClubBansListeners(client: Client) {
                 ),
               ]
             : undefined,
-        });
+        };
+
+        if (achievement) {
+          await bookClubChannel.send(messagePayload);
+        } else {
+          await bookClubBansChannel.send(messagePayload);
+        }
       } else {
         db.insert(bookClubBans)
           .values({
