@@ -12,8 +12,10 @@ import path from 'path';
 import { bookClubBans } from './db/schema';
 import { eq, sql } from 'drizzle-orm';
 
+const BOOK_CLUB_BANS_CHANNEL_ID =
+  process.env.LGT_BOOK_CLUB_BANS_CHANNEL_ID || '1390098162256969818';
 const BOOK_CLUB_CHANNEL_ID =
-  process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1390098162256969818';
+  process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
 const BANHAMMER_WIELDERS = new Map<string, string>([
   ['356482549549236225', 'Mike'],
   ['303660795513012225', 'Bethany'],
@@ -172,6 +174,10 @@ export async function registerBookClubBansListeners(client: Client) {
         .where(eq(bookClubBans.discordUserId, messageSenderId))
         .get();
 
+      const bookClubBansChannel = (await client.channels.fetch(
+        BOOK_CLUB_BANS_CHANNEL_ID
+      )) as TextChannel;
+
       const bookClubChannel = (await client.channels.fetch(
         BOOK_CLUB_CHANNEL_ID
       )) as TextChannel;
@@ -196,9 +202,19 @@ export async function registerBookClubBansListeners(client: Client) {
         const achievement = achievementsMap.get(banCount);
         if (achievement) {
           messageContent += `\n\n🏆 **Achievement unlocked:** "${achievement.title}"\n*${achievement.subtitle}*`;
+          await bookClubChannel.send({
+            content: messageContent,
+            files: achievement
+              ? [
+                  new AttachmentBuilder(
+                    path.join(__dirname, 'cheevos', `${banCount}-bans.png`)
+                  ),
+                ]
+              : undefined,
+          });
         }
 
-        await bookClubChannel.send({
+        await bookClubBansChannel.send({
           content: messageContent,
           files: achievement
             ? [
@@ -216,7 +232,7 @@ export async function registerBookClubBansListeners(client: Client) {
           })
           .run();
 
-        await bookClubChannel.send(
+        await bookClubBansChannel.send(
           `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}`
         );
       }
@@ -258,8 +274,8 @@ export async function registerBookClubBansListeners(client: Client) {
         return;
       }
 
-      const bookClubChannel = (await client.channels.fetch(
-        BOOK_CLUB_CHANNEL_ID
+      const bookClubBansChannel = (await client.channels.fetch(
+        BOOK_CLUB_BANS_CHANNEL_ID
       )) as TextChannel;
 
       const newMessageIds = messageIds.filter((id: string) => id !== messageId);
@@ -269,7 +285,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .where(eq(bookClubBans.discordUserId, messageSenderId))
           .run();
 
-        await bookClubChannel.send(
+        await bookClubBansChannel.send(
           `<@${messageSenderId}> has been brought back into ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}'s good graces.`
         );
       } else {
@@ -281,7 +297,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .run();
 
         const remainingBans = newMessageIds.length;
-        await bookClubChannel.send(
+        await bookClubBansChannel.send(
           `<@${messageSenderId}> is making their way back to being a valued citizen of the Book Club. ${remainingBans} strike${
             remainingBans !== 1 ? 's' : ''
           } remaining.`
