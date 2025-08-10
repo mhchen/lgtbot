@@ -1,7 +1,6 @@
-import { Client, TextChannel } from 'discord.js';
+import { Client } from 'discord.js';
 import { logger } from './logger';
 
-const WATERCOOLER_CHANNEL_ID = '964903664265359433';
 const RYAN_USER_ID = '219283881390637056';
 
 export async function registerRyanAstroShillListeners(client: Client) {
