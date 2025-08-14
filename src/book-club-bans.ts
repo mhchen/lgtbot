@@ -254,9 +254,9 @@ export async function registerBookClubBansListeners(client: Client) {
 
         if (achievement) {
           await bookClubChannel.send(messagePayload);
-        } else {
-          await bookClubBansChannel.send(messagePayload);
         }
+
+        await bookClubBansChannel.send(messagePayload);
       } else {
         db.insert(bookClubBans)
           .values({
