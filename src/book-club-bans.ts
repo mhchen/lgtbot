@@ -11,6 +11,7 @@ import { db } from './db/index';
 import path from 'path';
 import { bookClubBans } from './db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { isWithinInterval, getYear } from 'date-fns';
 
 const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1390098162256969818';
@@ -22,7 +23,23 @@ const BANHAMMER_WIELDERS = new Map<string, string>([
 const BANHAMMER_WIELDERS_ASSISTANTS = new Map<string, string>([
   ['219283881390637056', 'Ryan'],
 ]);
+
+const ROXY_USER_ID = '837878612891009034';
+
 const BANHAMMER_EMOJI = 'banhammer';
+
+function isAprilFoolsDay(): boolean {
+  const now = new Date();
+  const year = getYear(now);
+
+  const aprilFoolsStartEastern = new Date(`${year}-04-01T00:00:00.000-04:00`);
+  const aprilFoolsEndPacific = new Date(`${year}-04-01T23:59:59.999-07:00`);
+
+  return isWithinInterval(now, {
+    start: aprilFoolsStartEastern,
+    end: aprilFoolsEndPacific,
+  });
+}
 
 const achievementsMap = new Map<number, { title: string; subtitle: string }>([
   [
@@ -113,13 +130,22 @@ function getBanhammerWielderNameAndTitle(
     };
   }
 
+  if (userId === ROXY_USER_ID && isAprilFoolsDay()) {
+    return {
+      name: 'Roxy',
+      title: "April Fool's Day Jokester",
+    };
+  }
+
   return null;
 }
 
 function isBanhammerWielder(userId: string): boolean {
-  return (
-    BANHAMMER_WIELDERS.has(userId) || BANHAMMER_WIELDERS_ASSISTANTS.has(userId)
-  );
+  const isRegularWielder =
+    BANHAMMER_WIELDERS.has(userId) || BANHAMMER_WIELDERS_ASSISTANTS.has(userId);
+  const isRoxyOnAprilFools = userId === ROXY_USER_ID && isAprilFoolsDay();
+
+  return isRegularWielder || isRoxyOnAprilFools;
 }
 
 export function getBookClubCommands() {
