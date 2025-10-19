@@ -150,7 +150,8 @@ describe('Book Club Bans', () => {
     expect(bans).toHaveLength(1);
     expect(bans[0].discordMessageIds.split(',').length).toBe(10);
 
-    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(10);
+    // 10 times to bans channel, +1 for the achievement message to the main book club channel
+    expect(mockDiscordChannel.send).toHaveBeenCalledTimes(11);
     expect(mockDiscordChannel.send).toHaveBeenLastCalledWith({
       content: expect.stringMatching(/Achievement unlocked:/),
       files: expect.any(Array),
