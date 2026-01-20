@@ -17,7 +17,6 @@ import {
   handleCommand as handleKudosCommand,
 } from './kudos';
 import { handleCommand as handleTwitchCommand } from './twitch';
-import { registerWeeklyWinsListeners } from './weekly-wins';
 import { handleGoalsCommand, handleGoalInteraction } from './goals';
 import { registerAcronymListeners } from './acronyms';
 
@@ -43,7 +42,6 @@ client.once('ready', async () => {
   registerBookClubBansListeners(client);
   registerNoelRepliesListeners(client);
   registerKudosListeners(client);
-  registerWeeklyWinsListeners(client);
   registerAcronymListeners(client);
   startWebhookServer({
     client,
