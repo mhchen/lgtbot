@@ -95,6 +95,13 @@ const achievementsMap = new Map<number, { title: string; subtitle: string }>([
         'Somehow still part of the server despite breaking every rule in existence',
     },
   ],
+  [
+    250,
+    {
+      title: "You're Noel",
+      subtitle: 'At this point, just change your name',
+    },
+  ],
 ]);
 
 const WIELDER_TITLES = [
