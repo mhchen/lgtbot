@@ -8,8 +8,8 @@ import {
 import {
   createSubmission,
   getActivePool,
-  findByNormalizedUrl,
-  getDiscussedByNormalizedUrl,
+  findActiveByUrl,
+  findDiscussedByUrl,
   upsertVote,
   getVotesForWeek,
   getUserVoteForWeek,
@@ -104,7 +104,6 @@ describe('book club picks DB', () => {
   test('creates a submission and retrieves it in active pool', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
@@ -116,44 +115,41 @@ describe('book club picks DB', () => {
     expect(pool[0].title).toBe('Great article');
   });
 
-  test('findByNormalizedUrl finds active pool duplicates', () => {
+  test('findActiveByUrl finds active pool duplicates', () => {
     createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
 
-    const found = findByNormalizedUrl('https://example.com/article');
+    const found = findActiveByUrl('https://example.com/article');
     expect(found).not.toBeNull();
     expect(found!.title).toBe('Great article');
   });
 
-  test('findByNormalizedUrl does not return discussed articles', () => {
+  test('findActiveByUrl does not return discussed articles', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
 
     markAsDiscussed(submission.id);
 
-    const found = findByNormalizedUrl('https://example.com/article');
+    const found = findActiveByUrl('https://example.com/article');
     expect(found).toBeNull();
   });
 
-  test('getDiscussedByNormalizedUrl finds previously discussed articles', () => {
+  test('findDiscussedByUrl finds previously discussed articles', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
 
     markAsDiscussed(submission.id);
 
-    const found = getDiscussedByNormalizedUrl('https://example.com/article');
+    const found = findDiscussedByUrl('https://example.com/article');
     expect(found).not.toBeNull();
     expect(found!.discussedAt).not.toBeNull();
   });
@@ -161,7 +157,6 @@ describe('book club picks DB', () => {
   test('upsertVote creates a new vote', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
@@ -181,13 +176,11 @@ describe('book club picks DB', () => {
   test('upsertVote changes an existing vote', () => {
     const sub1 = createSubmission({
       url: 'https://example.com/article-1',
-      normalizedUrl: 'https://example.com/article-1',
       title: 'Article 1',
       submittedBy: 'user1',
     });
     const sub2 = createSubmission({
       url: 'https://example.com/article-2',
-      normalizedUrl: 'https://example.com/article-2',
       title: 'Article 2',
       submittedBy: 'user2',
     });
@@ -215,7 +208,6 @@ describe('book club picks DB', () => {
   test('votes from different weeks are independent', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
@@ -240,7 +232,6 @@ describe('book club picks DB', () => {
   test('markAsDiscussed removes article from active pool', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });
@@ -255,13 +246,11 @@ describe('book club picks DB', () => {
   test('getRecentlyDiscussed returns discussed articles sorted by date', () => {
     const sub1 = createSubmission({
       url: 'https://example.com/article-1',
-      normalizedUrl: 'https://example.com/article-1',
       title: 'Article 1',
       submittedBy: 'user1',
     });
     const sub2 = createSubmission({
       url: 'https://example.com/article-2',
-      normalizedUrl: 'https://example.com/article-2',
       title: 'Article 2',
       submittedBy: 'user2',
     });
@@ -278,13 +267,11 @@ describe('book club picks DB', () => {
   test('getVoteCountsForWeek returns counts per submission', () => {
     const sub1 = createSubmission({
       url: 'https://example.com/a1',
-      normalizedUrl: 'https://example.com/a1',
       title: 'Article 1',
       submittedBy: 'user1',
     });
     const sub2 = createSubmission({
       url: 'https://example.com/a2',
-      normalizedUrl: 'https://example.com/a2',
       title: 'Article 2',
       submittedBy: 'user2',
     });
@@ -314,7 +301,6 @@ describe('book club picks DB', () => {
   test('trackVoteMessage and getVoteMessagesForSubmission', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
-      normalizedUrl: 'https://example.com/article',
       title: 'Great article',
       submittedBy: 'user1',
     });

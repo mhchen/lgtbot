@@ -8,7 +8,6 @@ import { eq, and, isNull, isNotNull, desc, sql } from 'drizzle-orm';
 
 export function createSubmission(data: {
   url: string;
-  normalizedUrl: string;
   title: string;
   submittedBy: string;
 }) {
@@ -24,14 +23,14 @@ export function getActivePool() {
     .all();
 }
 
-export function findByNormalizedUrl(normalizedUrl: string) {
+export function findActiveByUrl(url: string) {
   return (
     db
       .select()
       .from(bookClubSubmissions)
       .where(
         and(
-          eq(bookClubSubmissions.normalizedUrl, normalizedUrl),
+          eq(bookClubSubmissions.url, url),
           isNull(bookClubSubmissions.discussedAt)
         )
       )
@@ -39,14 +38,14 @@ export function findByNormalizedUrl(normalizedUrl: string) {
   );
 }
 
-export function getDiscussedByNormalizedUrl(normalizedUrl: string) {
+export function findDiscussedByUrl(url: string) {
   return (
     db
       .select()
       .from(bookClubSubmissions)
       .where(
         and(
-          eq(bookClubSubmissions.normalizedUrl, normalizedUrl),
+          eq(bookClubSubmissions.url, url),
           isNotNull(bookClubSubmissions.discussedAt)
         )
       )

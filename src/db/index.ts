@@ -58,14 +58,13 @@ if (process.env.NODE_ENV === 'test') {
     CREATE TABLE IF NOT EXISTS book_club_submissions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       url TEXT NOT NULL,
-      normalized_url TEXT NOT NULL,
       title TEXT NOT NULL,
       submitted_by TEXT NOT NULL,
       submitted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
       discussed_at INTEGER
     );
 
-    CREATE INDEX IF NOT EXISTS bc_submissions_normalized_url_idx ON book_club_submissions(normalized_url);
+    CREATE INDEX IF NOT EXISTS bc_submissions_url_idx ON book_club_submissions(url);
     CREATE INDEX IF NOT EXISTS bc_submissions_discussed_at_idx ON book_club_submissions(discussed_at);
 
     CREATE TABLE IF NOT EXISTS book_club_votes (

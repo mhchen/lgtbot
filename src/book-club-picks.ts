@@ -15,8 +15,8 @@ import {
 import cron from 'node-cron';
 import {
   createSubmission,
-  findByNormalizedUrl,
-  getDiscussedByNormalizedUrl,
+  findActiveByUrl,
+  findDiscussedByUrl,
   trackVoteMessage,
   getActivePool,
   getUserVoteForWeek,
@@ -109,9 +109,9 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const normalized = normalizeUrl(rawUrl);
+  const cleanUrl = normalizeUrl(rawUrl);
 
-  const activeMatch = findByNormalizedUrl(normalized);
+  const activeMatch = findActiveByUrl(cleanUrl);
   if (activeMatch) {
     await interaction.reply({
       content: `This article is already in the pool, submitted by <@${activeMatch.submittedBy}>.`,
@@ -120,7 +120,7 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const discussedMatch = getDiscussedByNormalizedUrl(normalized);
+  const discussedMatch = findDiscussedByUrl(cleanUrl);
   if (discussedMatch) {
     const discussedDate = new Date(
       discussedMatch.discussedAt!
@@ -158,8 +158,7 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     userTitle || (await fetchTitle(rawUrl)) || fallbackTitle(rawUrl);
 
   const submission = createSubmission({
-    url: rawUrl,
-    normalizedUrl: normalized,
+    url: cleanUrl,
     title,
     submittedBy: interaction.user.id,
   });
@@ -170,7 +169,7 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     .setStyle(ButtonStyle.Primary);
 
   const message = await interaction.editReply({
-    content: `<@${interaction.user.id}> submitted: **${title}** - ${rawUrl}`,
+    content: `<@${interaction.user.id}> submitted: **${title}** - ${cleanUrl}`,
     components: [
       new ActionRowBuilder<ButtonBuilder>().addComponents(voteButton),
     ],
@@ -197,7 +196,16 @@ async function handleVoteCommand(interaction: ChatInputCommandInteraction) {
   const weekIdentifier = getCurrentWeek();
   const existingVote = getUserVoteForWeek(interaction.user.id, weekIdentifier);
 
-  const displayPool = pool.slice(0, 25);
+  // Sort so current vote appears first in the list
+  const sorted = existingVote
+    ? [...pool].sort((a, b) => {
+        if (a.id === existingVote.submissionId) return -1;
+        if (b.id === existingVote.submissionId) return 1;
+        return 0;
+      })
+    : pool;
+
+  const displayPool = sorted.slice(0, 25);
   const selectMenu = new StringSelectMenuBuilder()
     .setCustomId(`bookclub-vote-select-${interaction.user.id}`)
     .setPlaceholder('Pick an article to vote for')
@@ -214,13 +222,19 @@ async function handleVoteCommand(interaction: ChatInputCommandInteraction) {
       }))
     );
 
+  const currentVoteSub = existingVote
+    ? getSubmissionById(existingVote.submissionId)
+    : null;
+  const currentVoteText = currentVoteSub
+    ? `Your current vote: **${currentVoteSub.title}**\n`
+    : '';
   const note =
     pool.length > 25
       ? `\nShowing 25 of ${pool.length} articles. Use \`/lgt bookclub pool\` to see all.`
       : '';
 
   await interaction.reply({
-    content: `Vote for an article to discuss this week:${note}`,
+    content: `${currentVoteText}Vote for an article to discuss this week:${note}`,
     components: [
       new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu),
     ],
@@ -247,7 +261,7 @@ async function handleVoteSelectMenu(interaction: StringSelectMenuInteraction) {
   if (existingVote && existingVote.submissionId !== submissionId) {
     const oldSubmission = getSubmissionById(existingVote.submissionId);
     await interaction.reply({
-      content: `Vote changed from **${oldSubmission?.title ?? 'unknown'}** to **${submission.title}**`,
+      content: `Vote changed!\nPrevious: **${oldSubmission?.title ?? 'unknown'}**\nCurrent: **${submission.title}**`,
       ephemeral: true,
     });
   } else {
@@ -279,7 +293,7 @@ async function handleVoteButton(interaction: ButtonInteraction) {
   if (existingVote && existingVote.submissionId !== submissionId) {
     const oldSubmission = getSubmissionById(existingVote.submissionId);
     await interaction.reply({
-      content: `Vote changed from **${oldSubmission?.title ?? 'unknown'}** to **${submission.title}**`,
+      content: `Vote changed!\nPrevious: **${oldSubmission?.title ?? 'unknown'}**\nCurrent: **${submission.title}**`,
       ephemeral: true,
     });
   } else {
@@ -305,7 +319,7 @@ async function handleResubmitConfirm(interaction: ButtonInteraction) {
     return;
   }
 
-  const activeMatch = findByNormalizedUrl(oldSubmission.normalizedUrl);
+  const activeMatch = findActiveByUrl(oldSubmission.url);
   if (activeMatch) {
     await interaction.reply({
       content: `This article was already resubmitted by <@${activeMatch.submittedBy}>.`,
@@ -318,7 +332,6 @@ async function handleResubmitConfirm(interaction: ButtonInteraction) {
 
   const submission = createSubmission({
     url: oldSubmission.url,
-    normalizedUrl: oldSubmission.normalizedUrl,
     title: oldSubmission.title,
     submittedBy: interaction.user.id,
   });

@@ -78,7 +78,6 @@ export const bookClubSubmissions = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     url: text('url').notNull(),
-    normalizedUrl: text('normalized_url').notNull(),
     title: text('title').notNull(),
     submittedBy: text('submitted_by').notNull(),
     submittedAt: integer('submitted_at', { mode: 'timestamp_ms' })
@@ -87,9 +86,7 @@ export const bookClubSubmissions = sqliteTable(
     discussedAt: integer('discussed_at', { mode: 'timestamp_ms' }),
   },
   (table) => ({
-    normalizedUrlIdx: index('bc_submissions_normalized_url_idx').on(
-      table.normalizedUrl
-    ),
+    urlIdx: index('bc_submissions_url_idx').on(table.url),
     discussedAtIdx: index('bc_submissions_discussed_at_idx').on(
       table.discussedAt
     ),
