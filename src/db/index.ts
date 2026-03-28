@@ -54,6 +54,40 @@ if (process.env.NODE_ENV === 'test') {
     CREATE INDEX IF NOT EXISTS goals_user_week_idx ON goals(user_id, week_identifier);
     CREATE INDEX IF NOT EXISTS goals_week_idx ON goals(week_identifier);
     CREATE INDEX IF NOT EXISTS goals_active_idx ON goals(deleted_at);
+
+    CREATE TABLE IF NOT EXISTS book_club_submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT NOT NULL,
+      normalized_url TEXT NOT NULL,
+      title TEXT NOT NULL,
+      submitted_by TEXT NOT NULL,
+      submitted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+      discussed_at INTEGER
+    );
+
+    CREATE INDEX IF NOT EXISTS bc_submissions_normalized_url_idx ON book_club_submissions(normalized_url);
+    CREATE INDEX IF NOT EXISTS bc_submissions_discussed_at_idx ON book_club_submissions(discussed_at);
+
+    CREATE TABLE IF NOT EXISTS book_club_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
+      week_identifier TEXT NOT NULL,
+      voted_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS bc_votes_user_week_unique_idx ON book_club_votes(user_id, week_identifier);
+    CREATE INDEX IF NOT EXISTS bc_votes_submission_idx ON book_club_votes(submission_id);
+    CREATE INDEX IF NOT EXISTS bc_votes_week_idx ON book_club_votes(week_identifier);
+
+    CREATE TABLE IF NOT EXISTS book_club_vote_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      message_id TEXT NOT NULL,
+      channel_id TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS bc_vote_messages_submission_idx ON book_club_vote_messages(submission_id);
   `);
 }
 

@@ -4,7 +4,6 @@ import {
   Events,
   TextChannel,
   type Interaction,
-  SlashCommandSubcommandGroupBuilder,
 } from 'discord.js';
 import { logger } from './logger';
 import { db } from './db/index';
@@ -155,18 +154,6 @@ function isBanhammerWielder(userId: string): boolean {
   const isRoxyOnAprilFools = userId === ROXY_USER_ID && isAprilFoolsDay();
 
   return isRegularWielder || isRoxyOnAprilFools;
-}
-
-export function getBookClubCommands() {
-  return (group: SlashCommandSubcommandGroupBuilder) =>
-    group
-      .setName('bookclub')
-      .setDescription('Book club commands')
-      .addSubcommand((subcommand) =>
-        subcommand
-          .setName('bans')
-          .setDescription('Display the book club ban leaderboard')
-      );
 }
 
 export async function handleBookclubCommand(interaction: Interaction) {

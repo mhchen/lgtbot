@@ -72,3 +72,62 @@ export const goals = sqliteTable(
     activeIdx: index('goals_active_idx').on(table.deletedAt),
   })
 );
+
+export const bookClubSubmissions = sqliteTable(
+  'book_club_submissions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    url: text('url').notNull(),
+    normalizedUrl: text('normalized_url').notNull(),
+    title: text('title').notNull(),
+    submittedBy: text('submitted_by').notNull(),
+    submittedAt: integer('submitted_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(strftime('%s', 'now') * 1000)`),
+    discussedAt: integer('discussed_at', { mode: 'timestamp_ms' }),
+  },
+  (table) => ({
+    normalizedUrlIdx: index('bc_submissions_normalized_url_idx').on(
+      table.normalizedUrl
+    ),
+    discussedAtIdx: index('bc_submissions_discussed_at_idx').on(
+      table.discussedAt
+    ),
+  })
+);
+
+export const bookClubVotes = sqliteTable(
+  'book_club_votes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    submissionId: integer('submission_id').notNull(),
+    userId: text('user_id').notNull(),
+    weekIdentifier: text('week_identifier').notNull(),
+    votedAt: integer('voted_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(strftime('%s', 'now') * 1000)`),
+  },
+  (table) => ({
+    userWeekUnique: uniqueIndex('bc_votes_user_week_unique_idx').on(
+      table.userId,
+      table.weekIdentifier
+    ),
+    submissionIdx: index('bc_votes_submission_idx').on(table.submissionId),
+    weekIdx: index('bc_votes_week_idx').on(table.weekIdentifier),
+  })
+);
+
+export const bookClubVoteMessages = sqliteTable(
+  'book_club_vote_messages',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    submissionId: integer('submission_id').notNull(),
+    messageId: text('message_id').notNull(),
+    channelId: text('channel_id').notNull(),
+  },
+  (table) => ({
+    submissionIdx: index('bc_vote_messages_submission_idx').on(
+      table.submissionId
+    ),
+  })
+);

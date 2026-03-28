@@ -1,7 +1,7 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js';
 import { logger } from './logger';
 import { getKudosCommands } from './kudos';
-import { getBookClubCommands } from './book-club-bans';
+import { getBookClubPicksCommands } from './book-club-picks';
 import { getTwitchCommands } from './twitch';
 import { getGoalsCommands } from './goals';
 
@@ -12,7 +12,20 @@ const lgtCommand = new SlashCommandBuilder()
 const commands = [
   lgtCommand
     .addSubcommandGroup(getKudosCommands())
-    .addSubcommandGroup(getBookClubCommands())
+    .addSubcommandGroup((group) => {
+      group
+        .setName('bookclub')
+        .setDescription('Book club commands')
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName('bans')
+            .setDescription('Display the book club ban leaderboard')
+        );
+      for (const subcommand of getBookClubPicksCommands()) {
+        group.addSubcommand(subcommand);
+      }
+      return group;
+    })
     .addSubcommandGroup(getTwitchCommands())
     .addSubcommandGroup(getGoalsCommands()),
 ];

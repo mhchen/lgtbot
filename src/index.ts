@@ -11,6 +11,11 @@ import {
   registerBookClubBansListeners,
   handleBookclubCommand,
 } from './book-club-bans';
+import {
+  handleBookclubPicksCommand,
+  handleBookClubPicksInteraction,
+  registerBookClubPicksCron,
+} from './book-club-picks';
 import { registerNoelRepliesListeners } from './noel-replies';
 import {
   registerKudosListeners,
@@ -43,6 +48,7 @@ client.once('ready', async () => {
   registerNoelRepliesListeners(client);
   registerKudosListeners(client);
   registerAcronymListeners(client);
+  registerBookClubPicksCron(client);
   startWebhookServer({
     client,
     channelId: process.env.NOTIFICATION_CHANNEL_ID!,
@@ -73,9 +79,15 @@ client.on('interactionCreate', (interaction) =>
           await handleKudosCommand(interaction);
           break;
 
-        case 'bookclub':
-          await handleBookclubCommand(interaction);
+        case 'bookclub': {
+          const subcommand = interaction.options.getSubcommand();
+          if (subcommand === 'bans') {
+            await handleBookclubCommand(interaction);
+          } else {
+            await handleBookclubPicksCommand(interaction);
+          }
           break;
+        }
 
         case 'twitch':
           await handleTwitchCommand(interaction);
@@ -86,7 +98,18 @@ client.on('interactionCreate', (interaction) =>
           break;
       }
     } else {
-      await handleGoalInteraction(interaction);
+      if (
+        interaction.isModalSubmit() ||
+        interaction.isStringSelectMenu() ||
+        interaction.isButton()
+      ) {
+        const customId = interaction.customId;
+        if (customId.startsWith('goal-')) {
+          await handleGoalInteraction(interaction);
+        } else if (customId.startsWith('bookclub-')) {
+          await handleBookClubPicksInteraction(interaction);
+        }
+      }
     }
   })(interaction).catch((error) =>
     logger.error(error, 'Error handling interaction')
