@@ -12,7 +12,7 @@ import {
   TextChannel,
   type Interaction,
 } from 'discord.js';
-import cron from 'node-cron';
+import { Cron } from 'croner';
 import {
   createSubmission,
   findActiveByUrl,
@@ -480,6 +480,9 @@ export async function handleBookclubPicksCommand(
     case 'history':
       await handleHistoryCommand(interaction);
       break;
+    case 'close':
+      await handleCloseCommand(interaction);
+      break;
   }
 }
 
@@ -489,144 +492,152 @@ const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 1';
 const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 2';
 const CRON_TIMEZONE = 'America/New_York';
 
+async function closeVoting(client: Client) {
+  const channel = (await client.channels.fetch(
+    BOOK_CLUB_CHANNEL_ID
+  )) as TextChannel;
+  const pool = getActivePool();
+  if (pool.length === 0) {
+    await channel.send('No articles were submitted for book club this week.');
+    return;
+  }
+
+  const weekIdentifier = getCurrentWeek();
+  const voteCounts = getVoteCountsForWeek(weekIdentifier);
+  const voteMap = new Map(voteCounts.map((v) => [v.submissionId, v.voteCount]));
+
+  const { winner, tiebreak, noVotes } = selectWinner(pool, voteCounts);
+
+  if (noVotes) {
+    await channel.send('Nobody voted this week, so the bot chose randomly.');
+  }
+
+  // Fetch winner's vote messages BEFORE marking as discussed
+  const voteMessages = getVoteMessagesForSubmission(winner.id);
+  markAsDiscussed(winner.id);
+
+  const embed = new EmbedBuilder()
+    .setTitle("This week's book club article")
+    .setColor(0x00ff00)
+    .addFields(
+      { name: 'Title', value: winner.title, inline: false },
+      { name: 'URL', value: winner.url, inline: false },
+      {
+        name: 'Submitted by',
+        value: `<@${winner.submittedBy}>`,
+        inline: true,
+      },
+      {
+        name: 'Votes',
+        value: `${voteMap.get(winner.id) ?? 0}`,
+        inline: true,
+      }
+    );
+
+  if (tiebreak) {
+    embed.setFooter({ text: 'Won by tiebreaker (random selection)' });
+  }
+
+  await channel.send({ embeds: [embed] });
+
+  // Disable vote buttons on the winning submission's messages only
+  for (const vm of voteMessages) {
+    try {
+      const msgChannel = (await client.channels.fetch(
+        vm.channelId
+      )) as TextChannel;
+      const msg = await msgChannel.messages.fetch(vm.messageId);
+      const disabledRows = msg.components.map((row) => {
+        const newRow = new ActionRowBuilder<ButtonBuilder>();
+        row.components.forEach((c) => {
+          newRow.addComponents(
+            new ButtonBuilder(
+              c.data as ConstructorParameters<typeof ButtonBuilder>[0]
+            ).setDisabled(true)
+          );
+        });
+        return newRow;
+      });
+      await msg.edit({ components: disabledRows });
+    } catch (error) {
+      logger.warn(
+        error,
+        `Failed to disable vote button on message ${vm.messageId}`
+      );
+    }
+  }
+
+  logger.info(
+    `Book club voting closed. Winner: ${winner.title} (ID: ${winner.id})`
+  );
+}
+
+async function handleCloseCommand(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply();
+  try {
+    await closeVoting(interaction.client);
+    await interaction.editReply('Voting closed and winner announced!');
+  } catch (error) {
+    logger.error(error, 'Failed to close voting manually');
+    await interaction.editReply('Failed to close voting. Check the logs.');
+  }
+}
+
 export function registerBookClubPicksCron(client: Client) {
   // Monday reminder
-  cron.schedule(
+  new Cron(
     REMINDER_CRON,
-    async () => {
-      try {
-        const channel = (await client.channels.fetch(
-          BOOK_CLUB_CHANNEL_ID
-        )) as TextChannel;
-        const pool = getActivePool();
-        if (pool.length === 0) return;
-
-        const weekIdentifier = getCurrentWeek();
-        const voteCounts = getVoteCountsForWeek(weekIdentifier);
-        const voteMap = new Map(
-          voteCounts.map((v) => [v.submissionId, v.voteCount])
-        );
-
-        const sorted = [...pool].sort(
-          (a, b) => (voteMap.get(b.id) ?? 0) - (voteMap.get(a.id) ?? 0)
-        );
-
-        const embed = new EmbedBuilder()
-          .setTitle('Book club voting closes tomorrow morning!')
-          .setColor(0xff9900)
-          .addFields(
-            sorted.map((sub) => ({
-              name: `${sub.title} (${voteMap.get(sub.id) ?? 0} votes)`,
-              value: sub.url,
-              inline: false,
-            }))
-          )
-          .setFooter({
-            text: 'Use /lgt bookclub vote or click a vote button to cast yours!',
-          });
-
-        await channel.send({ embeds: [embed] });
-        logger.info('Book club voting reminder sent');
-      } catch (error) {
-        logger.error(error, 'Failed to send book club voting reminder');
-      }
+    {
+      timezone: CRON_TIMEZONE,
+      catch: (error) =>
+        logger.error(error, 'Failed to send book club voting reminder'),
     },
-    { timezone: CRON_TIMEZONE }
+    async () => {
+      const channel = (await client.channels.fetch(
+        BOOK_CLUB_CHANNEL_ID
+      )) as TextChannel;
+      const pool = getActivePool();
+      if (pool.length === 0) return;
+
+      const weekIdentifier = getCurrentWeek();
+      const voteCounts = getVoteCountsForWeek(weekIdentifier);
+      const voteMap = new Map(
+        voteCounts.map((v) => [v.submissionId, v.voteCount])
+      );
+
+      const sorted = [...pool].sort(
+        (a, b) => (voteMap.get(b.id) ?? 0) - (voteMap.get(a.id) ?? 0)
+      );
+
+      const embed = new EmbedBuilder()
+        .setTitle('Book club voting closes tomorrow morning!')
+        .setColor(0xff9900)
+        .addFields(
+          sorted.map((sub) => ({
+            name: `${sub.title} (${voteMap.get(sub.id) ?? 0} votes)`,
+            value: sub.url,
+            inline: false,
+          }))
+        )
+        .setFooter({
+          text: 'Use /lgt bookclub vote or click a vote button to cast yours!',
+        });
+
+      await channel.send({ embeds: [embed] });
+      logger.info('Book club voting reminder sent');
+    }
   );
 
   // Tuesday close
-  cron.schedule(
+  new Cron(
     CLOSE_CRON,
-    async () => {
-      try {
-        const channel = (await client.channels.fetch(
-          BOOK_CLUB_CHANNEL_ID
-        )) as TextChannel;
-        const pool = getActivePool();
-        if (pool.length === 0) {
-          await channel.send(
-            'No articles were submitted for book club this week.'
-          );
-          return;
-        }
-
-        const weekIdentifier = getCurrentWeek();
-        const voteCounts = getVoteCountsForWeek(weekIdentifier);
-        const voteMap = new Map(
-          voteCounts.map((v) => [v.submissionId, v.voteCount])
-        );
-
-        const { winner, tiebreak, noVotes } = selectWinner(pool, voteCounts);
-
-        if (noVotes) {
-          await channel.send(
-            'Nobody voted this week, so the bot chose randomly.'
-          );
-        }
-
-        // Fetch winner's vote messages BEFORE marking as discussed
-        const voteMessages = getVoteMessagesForSubmission(winner.id);
-        markAsDiscussed(winner.id);
-
-        const embed = new EmbedBuilder()
-          .setTitle("This week's book club article")
-          .setColor(0x00ff00)
-          .addFields(
-            { name: 'Title', value: winner.title, inline: false },
-            { name: 'URL', value: winner.url, inline: false },
-            {
-              name: 'Submitted by',
-              value: `<@${winner.submittedBy}>`,
-              inline: true,
-            },
-            {
-              name: 'Votes',
-              value: `${voteMap.get(winner.id) ?? 0}`,
-              inline: true,
-            }
-          );
-
-        if (tiebreak) {
-          embed.setFooter({ text: 'Won by tiebreaker (random selection)' });
-        }
-
-        await channel.send({ embeds: [embed] });
-
-        // Disable vote buttons on the winning submission's messages only
-        for (const vm of voteMessages) {
-          try {
-            const msgChannel = (await client.channels.fetch(
-              vm.channelId
-            )) as TextChannel;
-            const msg = await msgChannel.messages.fetch(vm.messageId);
-            const disabledRows = msg.components.map((row) => {
-              const newRow = new ActionRowBuilder<ButtonBuilder>();
-              row.components.forEach((c) => {
-                newRow.addComponents(
-                  new ButtonBuilder(
-                    c.data as ConstructorParameters<typeof ButtonBuilder>[0]
-                  ).setDisabled(true)
-                );
-              });
-              return newRow;
-            });
-            await msg.edit({ components: disabledRows });
-          } catch (error) {
-            logger.warn(
-              error,
-              `Failed to disable vote button on message ${vm.messageId}`
-            );
-          }
-        }
-
-        logger.info(
-          `Book club voting closed. Winner: ${winner.title} (ID: ${winner.id})`
-        );
-      } catch (error) {
-        logger.error(error, 'Failed to close book club voting');
-      }
+    {
+      timezone: CRON_TIMEZONE,
+      catch: (error) => logger.error(error, 'Failed to close book club voting'),
     },
-    { timezone: CRON_TIMEZONE }
+    async () => {
+      await closeVoting(client);
+    }
   );
 
   logger.info('Book club picks cron jobs registered');
@@ -658,5 +669,8 @@ export function getBookClubPicksCommands(): SlashCommandSubcommandBuilder[] {
     new SlashCommandSubcommandBuilder()
       .setName('history')
       .setDescription('View recently discussed articles'),
+    new SlashCommandSubcommandBuilder()
+      .setName('close')
+      .setDescription('Close voting and pick a winner (moderator only)'),
   ];
 }

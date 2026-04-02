@@ -81,6 +81,18 @@ client.on('interactionCreate', (interaction) =>
 
         case 'bookclub': {
           const subcommand = interaction.options.getSubcommand();
+          if (
+            subcommand === 'close' &&
+            !interaction.memberPermissions?.has(
+              PermissionFlagsBits.ModerateMembers
+            )
+          ) {
+            await interaction.reply({
+              content: 'You need moderator permissions to close voting.',
+              ephemeral: true,
+            });
+            return;
+          }
           if (subcommand === 'bans') {
             await handleBookclubCommand(interaction);
           } else {
