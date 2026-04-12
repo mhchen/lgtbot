@@ -29,6 +29,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@date-fns/tz": "^1.4.1",
     "@libsql/client": "^0.15.2",
     "@types/express": "^5.0.0",
     "axios": "^1.7.9",

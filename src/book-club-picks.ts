@@ -13,6 +13,7 @@ import {
   type Interaction,
 } from 'discord.js';
 import { Cron } from 'croner';
+import { subDays } from 'date-fns';
 import {
   createSubmission,
   findActiveByUrl,
@@ -22,13 +23,17 @@ import {
   getUserVoteForWeek,
   getSubmissionById,
   upsertVote,
-  getVoteCountsForWeek,
+  getVoteCountsAllTime,
   getRecentlyDiscussed,
   markAsDiscussed,
   getVoteMessagesForSubmission,
+  getVoteMessagesForSubmissions,
+  expireStaleSubmissions,
 } from './db/book-club-picks';
-import { getCurrentWeek } from './utils/week';
+import { getCurrentVotingPeriod } from './utils/week';
 import { logger } from './logger';
+
+const STALE_SUBMISSION_DAYS = 14;
 
 export function normalizeUrl(rawUrl: string): string {
   const url = new URL(rawUrl);
@@ -193,7 +198,7 @@ async function handleVoteCommand(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const weekIdentifier = getCurrentWeek();
+  const weekIdentifier = getCurrentVotingPeriod();
   const existingVote = getUserVoteForWeek(interaction.user.id, weekIdentifier);
 
   // Sort so current vote appears first in the list
@@ -244,13 +249,29 @@ async function handleVoteCommand(interaction: ChatInputCommandInteraction) {
 
 async function handleVoteSelectMenu(interaction: StringSelectMenuInteraction) {
   const submissionId = parseInt(interaction.values[0]);
-  const weekIdentifier = getCurrentWeek();
+  const weekIdentifier = getCurrentVotingPeriod();
   const existingVote = getUserVoteForWeek(interaction.user.id, weekIdentifier);
   const submission = getSubmissionById(submissionId);
 
   if (!submission) {
     await interaction.reply({
       content: 'That article no longer exists.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (submission.expiredAt != null) {
+    await interaction.reply({
+      content: `**${submission.title}** was removed from the pool after 2 weeks of no interest. Ask someone to resubmit it!`,
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (submission.discussedAt != null) {
+    await interaction.reply({
+      content: `**${submission.title}** was already discussed.`,
       ephemeral: true,
     });
     return;
@@ -276,12 +297,28 @@ async function handleVoteButton(interaction: ButtonInteraction) {
   const submissionId = parseInt(
     interaction.customId.replace('bookclub-vote-btn-', '')
   );
-  const weekIdentifier = getCurrentWeek();
+  const weekIdentifier = getCurrentVotingPeriod();
   const submission = getSubmissionById(submissionId);
 
   if (!submission) {
     await interaction.reply({
       content: 'That article no longer exists.',
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (submission.expiredAt != null) {
+    await interaction.reply({
+      content: `**${submission.title}** was removed from the pool after 2 weeks of no interest. Ask someone to resubmit it!`,
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (submission.discussedAt != null) {
+    await interaction.reply({
+      content: `**${submission.title}** was already discussed.`,
       ephemeral: true,
     });
     return;
@@ -406,8 +443,7 @@ async function handlePoolCommand(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const weekIdentifier = getCurrentWeek();
-  const voteCounts = getVoteCountsForWeek(weekIdentifier);
+  const voteCounts = getVoteCountsAllTime();
   const voteMap = new Map(voteCounts.map((v) => [v.submissionId, v.voteCount]));
 
   const sorted = [...pool].sort(
@@ -502,8 +538,7 @@ async function closeVoting(client: Client) {
     return;
   }
 
-  const weekIdentifier = getCurrentWeek();
-  const voteCounts = getVoteCountsForWeek(weekIdentifier);
+  const voteCounts = getVoteCountsAllTime();
   const voteMap = new Map(voteCounts.map((v) => [v.submissionId, v.voteCount]));
 
   const { winner, tiebreak, noVotes } = selectWinner(pool, voteCounts);
@@ -513,8 +548,17 @@ async function closeVoting(client: Client) {
   }
 
   // Fetch winner's vote messages BEFORE marking as discussed
-  const voteMessages = getVoteMessagesForSubmission(winner.id);
+  const winnerVoteMessages = getVoteMessagesForSubmission(winner.id);
   markAsDiscussed(winner.id);
+
+  // Winner is marked discussed, so it's exempt from stale-cleanup regardless of
+  // its last-vote timestamp. Everything else in the pool is fair game.
+  const expired = expireStaleSubmissions(
+    subDays(new Date(), STALE_SUBMISSION_DAYS)
+  );
+  const expiredVoteMessages = getVoteMessagesForSubmissions(
+    expired.map((sub) => sub.id)
+  );
 
   const embed = new EmbedBuilder()
     .setTitle("This week's book club article")
@@ -540,8 +584,19 @@ async function closeVoting(client: Client) {
 
   await channel.send({ embeds: [embed] });
 
-  // Disable vote buttons on the winning submission's messages only
-  for (const vm of voteMessages) {
+  if (expired.length > 0) {
+    const expiredList = expired
+      .map((sub) => `- **${sub.title}** — ${sub.url}`)
+      .join('\n');
+    const noun = expired.length === 1 ? 'article' : 'articles';
+    await channel.send(
+      `Removed ${expired.length} ${noun} from the pool after 2 weeks with no votes. Resubmit if you still want to discuss:\n${expiredList}`
+    );
+  }
+
+  // Disable vote buttons on the winner's messages plus any expired submissions'
+  // messages, so stale buttons don't accept clicks.
+  for (const vm of [...winnerVoteMessages, ...expiredVoteMessages]) {
     try {
       const msgChannel = (await client.channels.fetch(
         vm.channelId
@@ -568,7 +623,7 @@ async function closeVoting(client: Client) {
   }
 
   logger.info(
-    `Book club voting closed. Winner: ${winner.title} (ID: ${winner.id})`
+    `Book club voting closed. Winner: ${winner.title} (ID: ${winner.id}). Expired ${expired.length} stale submissions.`
   );
 }
 
@@ -599,8 +654,7 @@ export function registerBookClubPicksCron(client: Client) {
       const pool = getActivePool();
       if (pool.length === 0) return;
 
-      const weekIdentifier = getCurrentWeek();
-      const voteCounts = getVoteCountsForWeek(weekIdentifier);
+      const voteCounts = getVoteCountsAllTime();
       const voteMap = new Map(
         voteCounts.map((v) => [v.submissionId, v.voteCount])
       );

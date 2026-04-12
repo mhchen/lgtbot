@@ -1,4 +1,6 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
+import { sql } from 'drizzle-orm';
+import { subDays } from 'date-fns';
 import { db } from '../db/index';
 import {
   bookClubSubmissions,
@@ -11,15 +13,16 @@ import {
   findActiveByUrl,
   findDiscussedByUrl,
   upsertVote,
-  getVotesForWeek,
   getUserVoteForWeek,
   markAsDiscussed,
   getRecentlyDiscussed,
   trackVoteMessage,
   getVoteMessagesForSubmission,
-  getVoteCountsForWeek,
+  getVoteCountsAllTime,
+  expireStaleSubmissions,
 } from '../db/book-club-picks';
 import { normalizeUrl, selectWinner } from '../book-club-picks';
+import { getCurrentVotingPeriod } from '../utils/week';
 
 describe('normalizeUrl', () => {
   test('strips query parameters', () => {
@@ -56,6 +59,49 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('https://example.com/MyRepo/README')).toBe(
       'https://example.com/MyRepo/README'
     );
+  });
+});
+
+describe('getCurrentVotingPeriod', () => {
+  // April 2026 is EDT (UTC-4). Tuesday 2026-04-07 09:00 EDT = 13:00 UTC.
+  test('right at Tue 9am ET rolls to the new period', () => {
+    const nowUtc = new Date('2026-04-07T13:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  });
+
+  test('one minute before Tue 9am ET still belongs to the previous period', () => {
+    const nowUtc = new Date('2026-04-07T12:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-03-31');
+  });
+
+  test('mid-week defaults to the most recent Tuesday 9am ET', () => {
+    // Wednesday 2026-04-08 12:00 EDT = 16:00 UTC
+    const nowUtc = new Date('2026-04-08T16:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  });
+
+  test('sunday still maps back to the prior Tuesday', () => {
+    // Sunday 2026-04-12 10:00 EDT = 14:00 UTC
+    const nowUtc = new Date('2026-04-12T14:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  });
+
+  test('monday 11pm ET still belongs to the prior Tuesday', () => {
+    // Monday 2026-04-13 23:59 EDT = Tuesday 2026-04-14 03:59 UTC
+    const nowUtc = new Date('2026-04-14T03:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  });
+
+  test('handles standard time (EST) correctly', () => {
+    // Tuesday 2026-01-06 09:00 EST = 14:00 UTC
+    const nowUtc = new Date('2026-01-06T14:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-01-06');
+  });
+
+  test('handles standard time boundary one minute early', () => {
+    // Tuesday 2026-01-06 08:59 EST = 13:59 UTC → previous period
+    const nowUtc = new Date('2026-01-06T13:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2025-12-30');
   });
 });
 
@@ -164,13 +210,14 @@ describe('book club picks DB', () => {
     const result = upsertVote({
       submissionId: submission.id,
       userId: 'voter1',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
     });
 
     expect(result.submissionId).toBe(submission.id);
 
-    const votes = getVotesForWeek('2026-W13');
-    expect(votes).toHaveLength(1);
+    const vote = getUserVoteForWeek('voter1', '2026-04-07');
+    expect(vote).not.toBeNull();
+    expect(vote!.submissionId).toBe(submission.id);
   });
 
   test('upsertVote changes an existing vote', () => {
@@ -188,24 +235,20 @@ describe('book club picks DB', () => {
     upsertVote({
       submissionId: sub1.id,
       userId: 'voter1',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
     });
     upsertVote({
       submissionId: sub2.id,
       userId: 'voter1',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
     });
 
-    const userVote = getUserVoteForWeek('voter1', '2026-W13');
+    const userVote = getUserVoteForWeek('voter1', '2026-04-07');
     expect(userVote).not.toBeNull();
     expect(userVote!.submissionId).toBe(sub2.id);
-
-    // Should still only be one vote total for this user/week
-    const allVotes = getVotesForWeek('2026-W13');
-    expect(allVotes).toHaveLength(1);
   });
 
-  test('votes from different weeks are independent', () => {
+  test('votes from different periods are independent', () => {
     const submission = createSubmission({
       url: 'https://example.com/article',
       title: 'Great article',
@@ -215,18 +258,19 @@ describe('book club picks DB', () => {
     upsertVote({
       submissionId: submission.id,
       userId: 'voter1',
-      weekIdentifier: '2026-W12',
+      weekIdentifier: '2026-03-31',
     });
     upsertVote({
       submissionId: submission.id,
       userId: 'voter1',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
     });
 
-    const w12 = getVotesForWeek('2026-W12');
-    const w13 = getVotesForWeek('2026-W13');
-    expect(w12).toHaveLength(1);
-    expect(w13).toHaveLength(1);
+    const earlier = getUserVoteForWeek('voter1', '2026-03-31');
+    const later = getUserVoteForWeek('voter1', '2026-04-07');
+    expect(earlier).not.toBeNull();
+    expect(later).not.toBeNull();
+    expect(earlier!.id).not.toBe(later!.id);
   });
 
   test('markAsDiscussed removes article from active pool', () => {
@@ -264,7 +308,7 @@ describe('book club picks DB', () => {
     expect(history[0].title).toBe('Article 2');
   });
 
-  test('getVoteCountsForWeek returns counts per submission', () => {
+  test('getVoteCountsAllTime sums votes across all periods', () => {
     const sub1 = createSubmission({
       url: 'https://example.com/a1',
       title: 'Article 1',
@@ -279,23 +323,206 @@ describe('book club picks DB', () => {
     upsertVote({
       submissionId: sub1.id,
       userId: 'v1',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-03-31',
     });
     upsertVote({
       submissionId: sub1.id,
       userId: 'v2',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
+    });
+    upsertVote({
+      submissionId: sub1.id,
+      userId: 'v1',
+      weekIdentifier: '2026-04-07',
     });
     upsertVote({
       submissionId: sub2.id,
       userId: 'v3',
-      weekIdentifier: '2026-W13',
+      weekIdentifier: '2026-04-07',
     });
 
-    const counts = getVoteCountsForWeek('2026-W13');
+    const counts = getVoteCountsAllTime();
     const countMap = new Map(counts.map((c) => [c.submissionId, c.voteCount]));
-    expect(countMap.get(sub1.id)).toBe(2);
+    // sub1 gets v1@2026-03-31, v2@2026-04-07, v1@2026-04-07 — 3 distinct rows
+    // sub2 gets v3@2026-04-07 — 1 row
+    expect(countMap.get(sub1.id)).toBe(3);
     expect(countMap.get(sub2.id)).toBe(1);
+  });
+
+  test('getVoteCountsAllTime excludes discussed and expired submissions', () => {
+    const active = createSubmission({
+      url: 'https://example.com/active',
+      title: 'Active',
+      submittedBy: 'user1',
+    });
+    const discussed = createSubmission({
+      url: 'https://example.com/discussed',
+      title: 'Already discussed',
+      submittedBy: 'user2',
+    });
+    const expired = createSubmission({
+      url: 'https://example.com/expired',
+      title: 'Stale',
+      submittedBy: 'user3',
+    });
+
+    upsertVote({
+      submissionId: active.id,
+      userId: 'v1',
+      weekIdentifier: '2026-04-07',
+    });
+    upsertVote({
+      submissionId: discussed.id,
+      userId: 'v2',
+      weekIdentifier: '2026-04-07',
+    });
+    upsertVote({
+      submissionId: expired.id,
+      userId: 'v3',
+      weekIdentifier: '2026-04-07',
+    });
+
+    markAsDiscussed(discussed.id);
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 30) })
+      .where(sql`id = ${expired.id}`)
+      .run();
+    db.update(bookClubVotes)
+      .set({ votedAt: subDays(new Date(), 30) })
+      .where(sql`submission_id = ${expired.id}`)
+      .run();
+    expireStaleSubmissions(subDays(new Date(), 14));
+
+    const counts = getVoteCountsAllTime();
+    const countMap = new Map(counts.map((c) => [c.submissionId, c.voteCount]));
+    expect(countMap.get(active.id)).toBe(1);
+    expect(countMap.get(discussed.id)).toBeUndefined();
+    expect(countMap.get(expired.id)).toBeUndefined();
+  });
+
+  test('getActivePool excludes expired submissions', () => {
+    const active = createSubmission({
+      url: 'https://example.com/active',
+      title: 'Active',
+      submittedBy: 'user1',
+    });
+    const expired = createSubmission({
+      url: 'https://example.com/expired',
+      title: 'Expired',
+      submittedBy: 'user2',
+    });
+
+    // Force this one's submittedAt far in the past and expire it.
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 30) })
+      .where(sql`id = ${expired.id}`)
+      .run();
+    expireStaleSubmissions(subDays(new Date(), 14));
+
+    const pool = getActivePool();
+    expect(pool).toHaveLength(1);
+    expect(pool[0].id).toBe(active.id);
+  });
+
+  test('findActiveByUrl ignores expired submissions so they can be resubmitted', () => {
+    const submission = createSubmission({
+      url: 'https://example.com/article',
+      title: 'Article',
+      submittedBy: 'user1',
+    });
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 30) })
+      .where(sql`id = ${submission.id}`)
+      .run();
+    expireStaleSubmissions(subDays(new Date(), 14));
+
+    expect(findActiveByUrl('https://example.com/article')).toBeNull();
+    // Also should NOT appear as "previously discussed" — it was never discussed.
+    expect(findDiscussedByUrl('https://example.com/article')).toBeNull();
+  });
+
+  test('expireStaleSubmissions leaves fresh submissions alone', () => {
+    const fresh = createSubmission({
+      url: 'https://example.com/fresh',
+      title: 'Fresh',
+      submittedBy: 'user1',
+    });
+
+    const expired = expireStaleSubmissions(subDays(new Date(), 14));
+
+    expect(expired).toHaveLength(0);
+    expect(getActivePool().map((s) => s.id)).toContain(fresh.id);
+  });
+
+  test('expireStaleSubmissions leaves submissions with recent votes alone even if old', () => {
+    const old = createSubmission({
+      url: 'https://example.com/old',
+      title: 'Old but loved',
+      submittedBy: 'user1',
+    });
+
+    // Submitted long ago, but someone just voted for it yesterday.
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 90) })
+      .where(sql`id = ${old.id}`)
+      .run();
+    upsertVote({
+      submissionId: old.id,
+      userId: 'loyal-voter',
+      weekIdentifier: '2026-04-07',
+    });
+    // Backdate the vote to 1 day ago (still within the 2-week window).
+    db.update(bookClubVotes)
+      .set({ votedAt: subDays(new Date(), 1) })
+      .where(sql`submission_id = ${old.id}`)
+      .run();
+
+    const expired = expireStaleSubmissions(subDays(new Date(), 14));
+    expect(expired).toHaveLength(0);
+  });
+
+  test('expireStaleSubmissions marks submissions whose last vote was long ago', () => {
+    const stale = createSubmission({
+      url: 'https://example.com/stale',
+      title: 'Stale',
+      submittedBy: 'user1',
+    });
+
+    upsertVote({
+      submissionId: stale.id,
+      userId: 'voter',
+      weekIdentifier: '2026-03-17',
+    });
+    // Backdate both the submission and the vote well past the cutoff.
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 30) })
+      .where(sql`id = ${stale.id}`)
+      .run();
+    db.update(bookClubVotes)
+      .set({ votedAt: subDays(new Date(), 21) })
+      .where(sql`submission_id = ${stale.id}`)
+      .run();
+
+    const expired = expireStaleSubmissions(subDays(new Date(), 14));
+    expect(expired).toHaveLength(1);
+    expect(expired[0].id).toBe(stale.id);
+    expect(getActivePool()).toHaveLength(0);
+  });
+
+  test('expireStaleSubmissions does not touch already-discussed submissions', () => {
+    const winner = createSubmission({
+      url: 'https://example.com/winner',
+      title: 'Winner',
+      submittedBy: 'user1',
+    });
+    markAsDiscussed(winner.id);
+    db.update(bookClubSubmissions)
+      .set({ submittedAt: subDays(new Date(), 30) })
+      .where(sql`id = ${winner.id}`)
+      .run();
+
+    const expired = expireStaleSubmissions(subDays(new Date(), 14));
+    expect(expired).toHaveLength(0);
   });
 
   test('trackVoteMessage and getVoteMessagesForSubmission', () => {

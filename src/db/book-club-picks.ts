@@ -4,7 +4,7 @@ import {
   bookClubVotes,
   bookClubVoteMessages,
 } from './schema';
-import { eq, and, isNull, isNotNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, isNotNull, desc, sql, inArray } from 'drizzle-orm';
 
 export function createSubmission(data: {
   url: string;
@@ -18,7 +18,12 @@ export function getActivePool() {
   return db
     .select()
     .from(bookClubSubmissions)
-    .where(isNull(bookClubSubmissions.discussedAt))
+    .where(
+      and(
+        isNull(bookClubSubmissions.discussedAt),
+        isNull(bookClubSubmissions.expiredAt)
+      )
+    )
     .orderBy(bookClubSubmissions.submittedAt)
     .all();
 }
@@ -31,7 +36,8 @@ export function findActiveByUrl(url: string) {
       .where(
         and(
           eq(bookClubSubmissions.url, url),
-          isNull(bookClubSubmissions.discussedAt)
+          isNull(bookClubSubmissions.discussedAt),
+          isNull(bookClubSubmissions.expiredAt)
         )
       )
       .get() ?? null
@@ -102,23 +108,48 @@ export function getUserVoteForWeek(userId: string, weekIdentifier: string) {
   );
 }
 
-export function getVotesForWeek(weekIdentifier: string) {
-  return db
-    .select()
-    .from(bookClubVotes)
-    .where(eq(bookClubVotes.weekIdentifier, weekIdentifier))
-    .all();
-}
-
-export function getVoteCountsForWeek(weekIdentifier: string) {
+export function getVoteCountsAllTime() {
   return db
     .select({
       submissionId: bookClubVotes.submissionId,
       voteCount: sql<number>`count(*)`.as('vote_count'),
     })
     .from(bookClubVotes)
-    .where(eq(bookClubVotes.weekIdentifier, weekIdentifier))
+    .innerJoin(
+      bookClubSubmissions,
+      eq(bookClubSubmissions.id, bookClubVotes.submissionId)
+    )
+    .where(
+      and(
+        isNull(bookClubSubmissions.discussedAt),
+        isNull(bookClubSubmissions.expiredAt)
+      )
+    )
     .groupBy(bookClubVotes.submissionId)
+    .all();
+}
+
+// Mark any non-discussed, non-expired submission stale if its most recent
+// signal of interest (a vote, or the submission itself if never voted on)
+// is older than the cutoff. Returns the rows that were expired.
+export function expireStaleSubmissions(cutoff: Date) {
+  const cutoffMs = cutoff.getTime();
+  return db
+    .update(bookClubSubmissions)
+    .set({ expiredAt: sql`(strftime('%s', 'now') * 1000)` })
+    .where(
+      and(
+        isNull(bookClubSubmissions.discussedAt),
+        isNull(bookClubSubmissions.expiredAt),
+        sql`${bookClubSubmissions.id} IN (
+          SELECT s.id FROM ${bookClubSubmissions} s
+          LEFT JOIN ${bookClubVotes} v ON v.submission_id = s.id
+          GROUP BY s.id
+          HAVING COALESCE(MAX(v.voted_at), s.submitted_at) <= ${cutoffMs}
+        )`
+      )
+    )
+    .returning()
     .all();
 }
 
@@ -158,5 +189,18 @@ export function getVoteMessagesForSubmission(submissionId: number) {
     })
     .from(bookClubVoteMessages)
     .where(eq(bookClubVoteMessages.submissionId, submissionId))
+    .all();
+}
+
+export function getVoteMessagesForSubmissions(submissionIds: number[]) {
+  if (submissionIds.length === 0) return [];
+  return db
+    .select({
+      messageId: bookClubVoteMessages.messageId,
+      channelId: bookClubVoteMessages.channelId,
+      submissionId: bookClubVoteMessages.submissionId,
+    })
+    .from(bookClubVoteMessages)
+    .where(inArray(bookClubVoteMessages.submissionId, submissionIds))
     .all();
 }

@@ -84,12 +84,14 @@ export const bookClubSubmissions = sqliteTable(
       .notNull()
       .default(sql`(strftime('%s', 'now') * 1000)`),
     discussedAt: integer('discussed_at', { mode: 'timestamp_ms' }),
+    expiredAt: integer('expired_at', { mode: 'timestamp_ms' }),
   },
   (table) => ({
     urlIdx: index('bc_submissions_url_idx').on(table.url),
     discussedAtIdx: index('bc_submissions_discussed_at_idx').on(
       table.discussedAt
     ),
+    expiredAtIdx: index('bc_submissions_expired_at_idx').on(table.expiredAt),
   })
 );
 
