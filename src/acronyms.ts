@@ -410,16 +410,12 @@ const technicalAcronyms: AcronymMap = new Map([
 ]);
 
 function detectAcronyms(content: string, acronyms: AcronymMap): string[] {
-  const words = content
-    .toLowerCase()
-    .split(/\b/)
-    .filter((word) => !word.startsWith('http:') && !word.startsWith('https:'));
+  const contentWithoutUrls = content.replace(/https?:\/\/\S+/gi, ' ');
+
+  const words = contentWithoutUrls.toLowerCase().split(/\b/);
   const detectedAcronyms = words.filter((word) => acronyms.has(word));
 
-  const wordsWithSpaces = content
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((word) => !word.startsWith('http:') && !word.startsWith('https:'));
+  const wordsWithSpaces = contentWithoutUrls.toLowerCase().split(/\s+/);
   const detectedAcronymsWithSpaces = wordsWithSpaces.filter((word) =>
     acronyms.has(word)
   );
