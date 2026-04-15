@@ -3,7 +3,15 @@ import converter from 'number-to-words';
 import { syllable } from 'syllable';
 import { logger } from './logger';
 
+// Overrides for words the syllable library miscounts
+const SYLLABLE_OVERRIDES: Record<string, number> = {
+  noel: 2,
+  noels: 2,
+};
+
 function getSyllables(word: string): number {
+  const lower = word.toLowerCase();
+  if (SYLLABLE_OVERRIDES[lower] !== undefined) return SYLLABLE_OVERRIDES[lower];
   if (/^\d+$/.test(word)) {
     const asWords = converter.toWords(Number(word));
     if (asWords) return syllable(asWords);
