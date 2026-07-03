@@ -116,6 +116,27 @@ export const bookClubVotes = sqliteTable(
   })
 );
 
+export const haikus = sqliteTable(
+  'haikus',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    originalMessageId: text('original_message_id').notNull(),
+    haikuMessageId: text('haiku_message_id').notNull(),
+    originalText: text('original_text').notNull(),
+    haikuText: text('haiku_text').notNull(),
+    authorUserId: text('author_user_id').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(strftime('%s', 'now') * 1000)`),
+  },
+  (table) => ({
+    authorIdx: index('haikus_author_idx').on(table.authorUserId),
+    originalMessageIdx: index('haikus_original_message_idx').on(
+      table.originalMessageId
+    ),
+  })
+);
+
 export const bookClubVoteMessages = sqliteTable(
   'book_club_vote_messages',
   {

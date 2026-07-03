@@ -89,6 +89,19 @@ if (process.env.NODE_ENV === 'test') {
     );
 
     CREATE INDEX IF NOT EXISTS bc_vote_messages_submission_idx ON book_club_vote_messages(submission_id);
+
+    CREATE TABLE IF NOT EXISTS haikus (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      original_message_id TEXT NOT NULL,
+      haiku_message_id TEXT NOT NULL,
+      original_text TEXT NOT NULL,
+      haiku_text TEXT NOT NULL,
+      author_user_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+    );
+
+    CREATE INDEX IF NOT EXISTS haikus_author_idx ON haikus(author_user_id);
+    CREATE INDEX IF NOT EXISTS haikus_original_message_idx ON haikus(original_message_id);
   `);
 }
 
