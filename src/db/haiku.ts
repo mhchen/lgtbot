@@ -4,6 +4,7 @@ import { haikus } from './schema';
 export async function saveHaiku(data: {
   originalMessageId: string;
   haikuMessageId: string;
+  channelId: string;
   originalText: string;
   haikuText: string;
   authorUserId: string;

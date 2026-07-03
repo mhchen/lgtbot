@@ -122,6 +122,7 @@ export const haikus = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     originalMessageId: text('original_message_id').notNull(),
     haikuMessageId: text('haiku_message_id').notNull(),
+    channelId: text('channel_id').notNull(),
     originalText: text('original_text').notNull(),
     haikuText: text('haiku_text').notNull(),
     authorUserId: text('author_user_id').notNull(),

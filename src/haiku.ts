@@ -93,6 +93,7 @@ export function registerHaikuListeners(client: Client): void {
       await saveHaiku({
         originalMessageId: message.id,
         haikuMessageId: reply.id,
+        channelId: message.channelId,
         originalText: message.content,
         haikuText: haikuLines.join('\n'),
         authorUserId: message.author.id,

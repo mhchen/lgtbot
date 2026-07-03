@@ -20,7 +20,7 @@ function createHaikuMessage({
   const reply = mock(() => Promise.resolve({ id: replyId } as Message));
   const message = {
     id: 'orig123',
-    channelId: 'channel123',
+    channelId: 'channel456',
     content,
     author: { id: authorId, bot: false, displayName: 'Bashō' },
     member: { displayName: 'Bashō' },
@@ -66,6 +66,7 @@ describe('haiku listener', () => {
     expect(rows[0]).toMatchObject({
       originalMessageId: 'orig123',
       haikuMessageId: 'reply123',
+      channelId: 'channel456',
       originalText: HAIKU_TEXT,
       haikuText: 'an old silent pond\na frog jumps into the pond\nsplash silence again',
       authorUserId: 'author123',

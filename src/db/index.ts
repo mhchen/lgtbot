@@ -94,6 +94,7 @@ if (process.env.NODE_ENV === 'test') {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       original_message_id TEXT NOT NULL,
       haiku_message_id TEXT NOT NULL,
+      channel_id TEXT NOT NULL,
       original_text TEXT NOT NULL,
       haiku_text TEXT NOT NULL,
       author_user_id TEXT NOT NULL,
