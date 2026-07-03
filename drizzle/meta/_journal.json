@@ -43,6 +43,13 @@
       "when": 1783045483764,
       "tag": "0005_quiet_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1783053212185,
+      "tag": "0006_mature_juggernaut",
+      "breakpoints": true
     }
   ]
 }

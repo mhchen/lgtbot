@@ -102,7 +102,7 @@ if (process.env.NODE_ENV === 'test') {
     );
 
     CREATE INDEX IF NOT EXISTS haikus_author_idx ON haikus(author_user_id);
-    CREATE INDEX IF NOT EXISTS haikus_original_message_idx ON haikus(original_message_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS haikus_original_message_unique_idx ON haikus(original_message_id);
   `);
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, test, beforeEach, mock } from 'bun:test';
 import type { Client, Message } from 'discord.js';
 import { maybeParseHaiku, registerHaikuListeners } from '../haiku';
+import { saveHaiku } from '../db/haiku';
 import { db } from '../db/index';
 import { haikus } from '../db/schema';
 import { mockDiscordClient, resetMockDiscordClient } from './mockDiscordClient';
@@ -95,5 +96,32 @@ describe('haiku listener', () => {
     expect(reply).not.toHaveBeenCalled();
     const rows = await db.select().from(haikus);
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe('saveHaiku', () => {
+  beforeEach(async () => {
+    await db.delete(haikus);
+  });
+
+  test('does not duplicate a haiku for the same original message', async () => {
+    const row = {
+      originalMessageId: 'orig999',
+      haikuMessageId: 'reply999',
+      channelId: 'channel999',
+      originalText: HAIKU_TEXT,
+      haikuText: 'line one\nline two\nline three',
+      authorUserId: 'author999',
+    };
+
+    const first = await saveHaiku(row);
+    expect(first).toHaveLength(1);
+
+    const second = await saveHaiku({ ...row, haikuMessageId: 'reply-other' });
+    expect(second).toHaveLength(0);
+
+    const rows = await db.select().from(haikus);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.haikuMessageId).toBe('reply999');
   });
 });

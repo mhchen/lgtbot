@@ -9,5 +9,9 @@ export async function saveHaiku(data: {
   haikuText: string;
   authorUserId: string;
 }) {
-  return db.insert(haikus).values(data).returning();
+  return db
+    .insert(haikus)
+    .values(data)
+    .onConflictDoNothing({ target: haikus.originalMessageId })
+    .returning();
 }

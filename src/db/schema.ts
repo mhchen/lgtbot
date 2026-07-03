@@ -132,7 +132,7 @@ export const haikus = sqliteTable(
   },
   (table) => ({
     authorIdx: index('haikus_author_idx').on(table.authorUserId),
-    originalMessageIdx: index('haikus_original_message_idx').on(
+    originalMessageUnique: uniqueIndex('haikus_original_message_unique_idx').on(
       table.originalMessageId
     ),
   })
