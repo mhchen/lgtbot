@@ -327,3 +327,34 @@ h1 {
   border-radius: var(--radius);
   margin-top: 1.5rem;
 }
+
+.archive {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.archive-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.archive-row a {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.archive-row a:hover {
+  color: var(--cyan);
+}
+
+.archive-row time {
+  flex: none;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
