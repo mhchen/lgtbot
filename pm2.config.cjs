@@ -6,6 +6,7 @@ module.exports = {
       interpreter: 'bun',
       ignore_watch: ['*.db'],
       env: {
+        PORT: '3002',
         PATH: `${process.env.HOME}/.bun/bin:${process.env.PATH}`,
       },
     },
