@@ -1,9 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import {
-  getActivePool,
-  getVoteCountsAllTime,
-  getUserVoteForWeek,
-} from '../../../src/db/book-club-picks';
+import type { getActivePool } from '../../../src/db/book-club-picks';
 import { getCurrentVotingPeriod } from '../../../src/utils/week';
 import { requireMemberFn } from './membership';
 
@@ -22,6 +18,9 @@ export function sortPoolByVotes(
 
 export const getPoolFn = createServerFn({ method: 'GET' }).handler(async () => {
   const member = await requireMemberFn();
+  const { getActivePool, getVoteCountsAllTime, getUserVoteForWeek } = await import(
+    '../../../src/db/book-club-picks'
+  );
   const rows = sortPoolByVotes(getActivePool(), getVoteCountsAllTime());
   const currentVote = getUserVoteForWeek(member.userId, getCurrentVotingPeriod());
   return { rows, currentVoteId: currentVote?.submissionId ?? null };

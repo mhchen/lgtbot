@@ -1,5 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { getPoolFn } from '../server/pool';
+import { castVoteFn } from '../server/vote';
 
 export const Route = createFileRoute('/_authed/')({
   loader: () => getPoolFn(),
@@ -8,6 +9,12 @@ export const Route = createFileRoute('/_authed/')({
 
 function PoolPage() {
   const { rows, currentVoteId } = Route.useLoaderData();
+  const router = useRouter();
+
+  async function vote(submissionId: number) {
+    await castVoteFn({ data: { submissionId } });
+    await router.invalidate();
+  }
 
   return (
     <main>
@@ -32,6 +39,14 @@ function PoolPage() {
                   </a>
                   {mine ? <span className="pool-mine-tag">Your vote</span> : null}
                 </div>
+                <button
+                  type="button"
+                  className="vote-btn"
+                  disabled={mine}
+                  onClick={() => vote(row.id)}
+                >
+                  {mine ? 'Voted' : 'Vote'}
+                </button>
               </li>
             );
           })}

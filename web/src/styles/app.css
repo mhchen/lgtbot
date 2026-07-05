@@ -189,6 +189,35 @@ h1 {
   color: var(--magenta);
 }
 
+.vote-btn {
+  flex: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border-bright);
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out),
+    color 0.18s var(--ease-out);
+}
+
+.vote-btn:hover:not(:disabled) {
+  background: var(--magenta);
+  border-color: var(--magenta);
+  color: oklch(0.16 0.03 300);
+}
+
+.vote-btn:disabled {
+  cursor: default;
+  color: var(--text-faint);
+  border-color: var(--border);
+  background: transparent;
+}
+
 .empty {
   padding: 2.5rem 1.25rem;
   text-align: center;
