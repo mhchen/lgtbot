@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
       exclude: serverOnly,
     },
     build: {
+      target: 'esnext',
       rollupOptions: {
         external: (id: string) => isServerOnly(id),
       },

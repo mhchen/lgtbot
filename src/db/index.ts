@@ -12,7 +12,7 @@ export type AppDb = BaseSQLiteDatabase<'sync', unknown, typeof schema>;
 
 const isTest = process.env.NODE_ENV === 'test';
 const hasBun = typeof (globalThis as { Bun?: unknown }).Bun !== 'undefined';
-const dbPath = path.join(import.meta.dirname, '../../data/lgtbot.db');
+const dbPath = path.join(process.cwd(), 'data', 'lgtbot.db');
 
 const TEST_SCHEMA = `
   CREATE TABLE IF NOT EXISTS book_club_bans (
