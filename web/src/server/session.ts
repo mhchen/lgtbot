@@ -6,7 +6,11 @@ export type SessionData = {
   avatar?: string | null;
 };
 
-export type DiscordUser = { id: string; username: string; avatar: string | null };
+export type DiscordUser = {
+  id: string;
+  username: string;
+  avatar: string | null;
+};
 
 export function buildSessionData(user: DiscordUser): SessionData {
   return { userId: user.id, username: user.username, avatar: user.avatar };

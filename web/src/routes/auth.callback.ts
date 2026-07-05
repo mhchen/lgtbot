@@ -1,7 +1,11 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { getRequestHeader } from '@tanstack/react-start/server';
 import { discord } from '../server/discord';
-import { buildSessionData, useAppSession, type DiscordUser } from '../server/session';
+import {
+  buildSessionData,
+  useAppSession,
+  type DiscordUser,
+} from '../server/session';
 
 function readCookie(name: string): string | null {
   const header = getRequestHeader('cookie');

@@ -7,5 +7,5 @@ export const DISCORD_SCOPES = ['identify'];
 export const discord = new arctic.Discord(
   process.env.DISCORD_CLIENT_ID!,
   process.env.DISCORD_CLIENT_SECRET!,
-  `${WEB_BASE_URL}/auth/callback`,
+  `${WEB_BASE_URL}/auth/callback`
 );

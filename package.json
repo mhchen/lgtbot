@@ -13,8 +13,8 @@
     "web:dev": "vite --config web/vite.config.ts",
     "web:build": "vite build --config web/vite.config.ts",
     "web:start": "PORT=3001 bun run web/dist/server/server.js",
-    "lint": "eslint . --ext .ts,.tsx && prettier --check .",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix && prettier --write .",
+    "lint": "eslint . --ext .ts,.tsx && git ls-files -co --exclude-standard -z '*.ts' '*.tsx' '*.js' '*.cjs' '*.css' '*.json' '*.md' | xargs -0 prettier --check",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix && git ls-files -co --exclude-standard -z '*.ts' '*.tsx' '*.js' '*.cjs' '*.css' '*.json' '*.md' | xargs -0 prettier --write",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -39,6 +39,8 @@
   },
   "dependencies": {
     "@date-fns/tz": "^1.4.1",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
+    "@fontsource/space-mono": "^5.2.9",
     "@libsql/client": "^0.15.2",
     "@tanstack/react-router": "^1.170.17",
     "@tanstack/react-start": "^1.168.27",
