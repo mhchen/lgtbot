@@ -21,9 +21,23 @@ bun run lint        # Run ESLint and Prettier checks
 bun run lint:fix    # Fix linting and formatting issues
 bun run typecheck   # Run TypeScript type checking
 
+# Web portal (TanStack Start, in web/)
+bun run web:dev     # Dev server on port 3001 (Vite, runs under Node)
+bun run web:build   # Production build to web/dist/
+bun run web:start   # Serve the build on port 3001 (Bun)
+
 # Production
-pm2 start pm2.config.cjs --watch  # Start with PM2 process manager
+pm2 start pm2.config.cjs --watch  # Start both the bot and web portal
 ```
+
+## Web Portal
+
+A guild-gated web portal (`web/`, TanStack Start on Bun) runs as a second process next to the bot on port 3001, sharing the same `data/lgtbot.db` via `src/db`. Members log in with Discord, browse the book club pool, vote, and submit articles. Web submissions post the same vote-button announcement to the book club channel via Discord REST, so the bot's button handler and close-cron treat them identically.
+
+- **Runtime driver:** `src/db/index.ts` selects `bun:sqlite` under Bun and `better-sqlite3` under Node (Vite dev SSR runs server modules under Node). Server-only modules (`src/db`, `src/book-club-picks`, `discord.js`) are dynamically imported inside server functions so they stay out of the client bundle.
+- **Built server entry:** `web/dist/server/server.js` exports a `{ fetch }` handler; `bun run` auto-serves it on `PORT` (defaults to 3000, so `web:start` and PM2 pin `PORT=3001`).
+- **Env vars:** `DISCORD_CLIENT_SECRET`, `SESSION_SECRET` (≥32 chars), `WEB_BASE_URL` (e.g. `http://localhost:3001` in dev, the prod domain in prod), plus the reused `DISCORD_TOKEN` and `DISCORD_CLIENT_ID`. OAuth scope is `identify` only; membership is verified with the bot token.
+- **OAuth redirect URI:** register `${WEB_BASE_URL}/auth/callback` in the Discord developer portal (both the localhost dev URL and the prod URL).
 
 ## Architecture Overview
 

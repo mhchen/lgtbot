@@ -8,6 +8,14 @@ const repoRoot = path.resolve(webRoot, '..');
 
 const serverOnly = ['bun:sqlite', 'better-sqlite3', 'discord.js'];
 
+function isServerOnly(id: string): boolean {
+  return (
+    serverOnly.includes(id) ||
+    id.startsWith('@discordjs/') ||
+    id === 'zlib-sync'
+  );
+}
+
 export default defineConfig(({ mode }) => {
   for (const [key, value] of Object.entries(loadEnv(mode, repoRoot, ''))) {
     if (process.env[key] == null) process.env[key] = value;
@@ -24,6 +32,11 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       exclude: serverOnly,
+    },
+    build: {
+      rollupOptions: {
+        external: (id: string) => isServerOnly(id),
+      },
     },
     plugins: [tanstackStart(), viteReact()],
   };
