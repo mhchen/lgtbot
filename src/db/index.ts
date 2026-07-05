@@ -1,8 +1,14 @@
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { Database } from 'bun:sqlite';
+import type { Database as BunDatabase } from 'bun:sqlite';
 import path from 'path';
 import * as schema from './schema';
+
+export function applyConcurrencyPragmas(sqlite: BunDatabase) {
+  sqlite.run('PRAGMA journal_mode = WAL');
+  sqlite.run('PRAGMA busy_timeout = 5000');
+}
 
 const sqlite =
   process.env.NODE_ENV === 'test'
@@ -10,6 +16,10 @@ const sqlite =
     : new Database(path.join(import.meta.dir, '../../data/lgtbot.db'), {
         create: true,
       });
+
+if (process.env.NODE_ENV !== 'test') {
+  applyConcurrencyPragmas(sqlite);
+}
 
 if (process.env.NODE_ENV === 'test') {
   sqlite.run(`
