@@ -124,7 +124,6 @@ describe('kudos', () => {
           messageChannelId: 'channel123',
           messageAuthorId: 'author123',
           reactorId: `reactor${i}`,
-          guildId: 'guild123',
           createdAt: subDays(new Date(), 1),
         });
       }
@@ -164,7 +163,6 @@ describe('kudos', () => {
         messageChannelId: 'channel123',
         messageAuthorId: 'author123',
         reactorId: 'user123',
-        guildId: 'guild123',
         createdAt: new Date(),
       });
 
@@ -189,7 +187,6 @@ describe('kudos', () => {
           messageChannelId: 'channel123',
           messageAuthorId: 'user123',
           reactorId: `reactor${i}`,
-          guildId: 'guild123',
           createdAt: new Date(),
         });
       }
@@ -232,7 +229,6 @@ describe('kudos', () => {
           messageChannelId: 'channel123',
           messageAuthorId: 'user1',
           reactorId: 'user2',
-          guildId: 'guild123',
           createdAt: new Date(),
         });
       }
@@ -243,7 +239,6 @@ describe('kudos', () => {
           messageChannelId: 'channel123',
           messageAuthorId: 'user1',
           reactorId: `user${i + 3}`, // user3 and user4 react
-          guildId: 'guild123',
           createdAt: new Date(),
         });
       }
@@ -256,7 +251,6 @@ describe('kudos', () => {
           messageChannelId: 'channel123',
           messageAuthorId: 'user2',
           reactorId: 'user3',
-          guildId: 'guild123',
           createdAt: new Date(),
         });
       }
@@ -266,7 +260,6 @@ describe('kudos', () => {
         messageChannelId: 'channel123',
         messageAuthorId: 'user2',
         reactorId: 'user4',
-        guildId: 'guild123',
         createdAt: new Date(),
       });
 
@@ -304,7 +297,6 @@ describe('kudos', () => {
           messageChannelId: 'channel1',
           messageAuthorId: 'user1',
           reactorId: `reactor${i}`,
-          guildId: 'guild123',
           createdAt: i < 8 ? subDays(new Date(), 1) : new Date(),
         });
       }
@@ -316,7 +308,6 @@ describe('kudos', () => {
           messageChannelId: 'channel1',
           messageAuthorId: 'user2',
           reactorId: `reactor${i + 10}`,
-          guildId: 'guild123',
           createdAt: i < 3 ? subDays(new Date(), 1) : new Date(),
         });
       }

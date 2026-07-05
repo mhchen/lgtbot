@@ -10,20 +10,17 @@ export async function addKudosReaction({
   messageChannelId,
   messageAuthorId,
   reactorId,
-  guildId,
 }: {
   messageId: string;
   messageChannelId: string;
   messageAuthorId: string;
   reactorId: string;
-  guildId: string;
 }) {
   return db.insert(kudosReactions).values({
     messageId,
     messageChannelId,
     messageAuthorId,
     reactorId,
-    guildId,
   });
 }
 

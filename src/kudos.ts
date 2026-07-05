@@ -242,7 +242,6 @@ export async function handleKudosReaction(
     messageChannelId,
     messageAuthorId,
     reactorId,
-    guildId,
   });
 
   const newStats = await getUserKudosStats({ userId: messageAuthorId });

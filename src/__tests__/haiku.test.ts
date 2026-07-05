@@ -69,7 +69,8 @@ describe('haiku listener', () => {
       haikuMessageId: 'reply123',
       channelId: 'channel456',
       originalText: HAIKU_TEXT,
-      haikuText: 'an old silent pond\na frog jumps into the pond\nsplash silence again',
+      haikuText:
+        'an old silent pond\na frog jumps into the pond\nsplash silence again',
       authorUserId: 'author123',
     });
     expect(rows[0]!.createdAt).toBeInstanceOf(Date);
