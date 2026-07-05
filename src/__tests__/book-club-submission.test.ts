@@ -1,6 +1,7 @@
 import { test, expect } from 'bun:test';
 import {
   buildVoteMessagePayload,
+  fetchTitle,
   resolveSubmissionTitle,
 } from '../book-club-picks';
 
@@ -22,4 +23,18 @@ test('buildVoteMessagePayload includes the submitter, title, and a vote button',
 test('resolveSubmissionTitle prefers an explicit user title', async () => {
   const title = await resolveSubmissionTitle('https://example.com', 'My Title');
   expect(title).toBe('My Title');
+});
+
+test('fetchTitle decodes HTML entities in the page title', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(
+      '<html><head><title>Nine Questions I Wish I&#x27;d Asked &amp; More</title></head></html>'
+    )) as typeof fetch;
+  try {
+    const title = await fetchTitle('https://example.com/post');
+    expect(title).toBe("Nine Questions I Wish I'd Asked & More");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

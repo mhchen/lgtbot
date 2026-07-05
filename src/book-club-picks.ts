@@ -32,6 +32,7 @@ import {
 } from './db/book-club-picks';
 import { getCurrentVotingPeriod } from './utils/week';
 import { logger } from './logger';
+import { decode } from 'html-entities';
 
 const STALE_SUBMISSION_DAYS = 14;
 
@@ -86,7 +87,7 @@ export async function fetchTitle(url: string): Promise<string | null> {
     const response = await fetch(url, { signal: controller.signal });
     const html = await response.text();
     const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    return match ? match[1].trim() : null;
+    return match ? decode(match[1]).trim() : null;
   } catch {
     return null;
   } finally {

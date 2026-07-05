@@ -53,6 +53,7 @@
     "discord.js": "^14.16.3",
     "drizzle-orm": "^0.41.0",
     "express": "^4.21.2",
+    "html-entities": "^2.6.0",
     "number-to-words": "^1.2.4",
     "picocolors": "^1.1.1",
     "pino": "^9.7.0",
