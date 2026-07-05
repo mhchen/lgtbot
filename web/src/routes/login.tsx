@@ -11,7 +11,7 @@ const startLogin = createServerFn({ method: 'GET' }).handler(async () => {
     'Set-Cookie',
     `oauth_state=${state}; HttpOnly; SameSite=Lax; Path=/; Max-Age=600${
       process.env.NODE_ENV === 'production' ? '; Secure' : ''
-    }`,
+    }`
   );
   throw redirect({ href: url.toString() });
 });

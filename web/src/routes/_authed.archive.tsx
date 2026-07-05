@@ -11,8 +11,10 @@ function ArchivePage() {
 
   return (
     <main>
-      <h1>Recently discussed</h1>
-      <p className="subtitle">Everything the club has read, newest first.</p>
+      <section className="hero">
+        <p className="eyebrow">Book club</p>
+        <h1>Past picks</h1>
+      </section>
 
       {discussed.length === 0 ? (
         <div className="empty">Nothing discussed yet.</div>
@@ -32,6 +34,10 @@ function ArchivePage() {
           ))}
         </ul>
       )}
+
+      <a href="/" className="back-link">
+        ← Back to the pool
+      </a>
     </main>
   );
 }

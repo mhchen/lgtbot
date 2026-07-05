@@ -52,37 +52,42 @@ function PoolPage() {
 
   return (
     <main>
-      <h1>This week&rsquo;s pool</h1>
-      <p className="subtitle">Voting closes Tuesday morning.</p>
+      <section className="hero">
+        <p className="eyebrow">Book club</p>
+        <h1>This week&rsquo;s pool</h1>
+      </section>
 
-      <form
-        className="submit-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit(false);
-        }}
-      >
-        <input
-          className="field"
-          type="url"
-          value={url}
-          onChange={(event) => {
-            setUrl(event.target.value);
-            setPendingDiscussedAt(null);
+      <div className="submit">
+        <p className="submit__label">Add to the pool</p>
+        <form
+          className="submit__form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit(false);
           }}
-          placeholder="Paste an article URL"
-          required
-        />
-        <input
-          className="field"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Title (optional)"
-        />
-        <button type="submit" className="submit-btn" disabled={busy}>
-          {busy ? 'Working…' : 'Submit'}
-        </button>
-      </form>
+        >
+          <input
+            className="field"
+            type="url"
+            value={url}
+            onChange={(event) => {
+              setUrl(event.target.value);
+              setPendingDiscussedAt(null);
+            }}
+            placeholder="Paste an article URL"
+            required
+          />
+          <input
+            className="field"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Title (optional)"
+          />
+          <button type="submit" className="btn btn-primary" disabled={busy}>
+            {busy ? 'Working…' : 'Submit'}
+          </button>
+        </form>
+      </div>
 
       {error ? <p className="form-error">{error}</p> : null}
 
@@ -92,10 +97,10 @@ function PoolPage() {
             This was discussed on{' '}
             {new Date(pendingDiscussedAt).toLocaleDateString()}. Submit anyway?
           </span>
-          <div className="resubmit-actions">
+          <div className="resubmit__actions">
             <button
               type="button"
-              className="vote-btn"
+              className="btn btn-secondary"
               disabled={busy}
               onClick={() => submit(true)}
             >
@@ -103,7 +108,7 @@ function PoolPage() {
             </button>
             <button
               type="button"
-              className="ghost-btn"
+              className="btn btn-ghost"
               onClick={() => setPendingDiscussedAt(null)}
             >
               Cancel
@@ -135,13 +140,11 @@ function PoolPage() {
                   >
                     {row.title}
                   </a>
-                  {mine ? (
-                    <span className="pool-mine-tag">Your vote</span>
-                  ) : null}
+                  {mine ? <span className="pool-mine">Your vote</span> : null}
                 </div>
                 <button
                   type="button"
-                  className="vote-btn"
+                  className={`btn ${mine ? 'btn-ghost' : 'btn-secondary'}`}
                   disabled={mine}
                   onClick={() => vote(row.id)}
                 >
@@ -152,6 +155,13 @@ function PoolPage() {
           })}
         </ul>
       )}
+
+      <div className="section-head">
+        <h2>Past picks</h2>
+        <a href="/archive" className="nav-link">
+          View archive
+        </a>
+      </div>
     </main>
   );
 }
