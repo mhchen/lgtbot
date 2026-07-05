@@ -541,8 +541,8 @@ export async function handleBookclubPicksCommand(
 
 export const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
-const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 1';
-const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 2';
+const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 5';
+const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 6';
 const CRON_TIMEZONE = 'America/New_York';
 
 async function closeVoting(client: Client) {
@@ -656,7 +656,7 @@ async function handleCloseCommand(interaction: ChatInputCommandInteraction) {
 }
 
 export function registerBookClubPicksCron(client: Client) {
-  // Monday reminder
+  // Friday reminder
   new Cron(
     REMINDER_CRON,
     {
@@ -699,7 +699,7 @@ export function registerBookClubPicksCron(client: Client) {
     }
   );
 
-  // Tuesday close
+  // Saturday close
   new Cron(
     CLOSE_CRON,
     {
