@@ -14,7 +14,9 @@ test('buildVoteMessagePayload includes the submitter, title, and a vote button',
   expect(payload.content).toContain('A Post');
   expect(payload.content).toContain('<@123>');
   const json = payload.components[0].toJSON();
-  expect(json.components[0]).toMatchObject({ custom_id: 'bookclub-vote-btn-7' });
+  expect(json.components[0]).toMatchObject({
+    custom_id: 'bookclub-vote-btn-7',
+  });
 });
 
 test('resolveSubmissionTitle prefers an explicit user title', async () => {

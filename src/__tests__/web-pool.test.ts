@@ -17,7 +17,7 @@ test('sortPoolByVotes orders by vote count desc and attaches counts', () => {
     [
       { submissionId: 2, voteCount: 5 },
       { submissionId: 3, voteCount: 2 },
-    ],
+    ]
   );
   expect(rows.map((row) => row.id)).toEqual([2, 3, 1]);
   expect(rows.find((row) => row.id === 1)!.voteCount).toBe(0);

@@ -32,13 +32,25 @@ body {
 body {
   background-color: var(--bg);
   background-image:
-    radial-gradient(120% 80% at 50% -10%, oklch(0.28 0.09 330 / 0.55), transparent 60%),
+    radial-gradient(
+      120% 80% at 50% -10%,
+      oklch(0.28 0.09 330 / 0.55),
+      transparent 60%
+    ),
     linear-gradient(oklch(0.55 0.14 320 / 0.05) 1px, transparent 1px),
     linear-gradient(90deg, oklch(0.55 0.14 320 / 0.05) 1px, transparent 1px);
-  background-size: 100% 100%, 44px 44px, 44px 44px;
+  background-size:
+    100% 100%,
+    44px 44px,
+    44px 44px;
   background-attachment: fixed;
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
   font-size: 16px;
   line-height: 1.55;
   min-height: 100vh;
@@ -133,16 +145,19 @@ h1 {
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+  transition:
+    border-color 0.2s var(--ease-out),
+    transform 0.2s var(--ease-out);
 }
 
 .pool-row:hover {
   border-color: var(--border-bright);
 }
 
-.pool-row[data-mine="true"] {
+.pool-row[data-mine='true'] {
   border-color: oklch(0.72 0.18 350 / 0.7);
-  background: linear-gradient(oklch(0.72 0.18 350 / 0.06), transparent), var(--bg-raised);
+  background:
+    linear-gradient(oklch(0.72 0.18 350 / 0.06), transparent), var(--bg-raised);
 }
 
 .pool-count {
@@ -201,7 +216,9 @@ h1 {
   border-radius: 999px;
   padding: 0.4rem 1.1rem;
   cursor: pointer;
-  transition: background 0.18s var(--ease-out), border-color 0.18s var(--ease-out),
+  transition:
+    background 0.18s var(--ease-out),
+    border-color 0.18s var(--ease-out),
     color 0.18s var(--ease-out);
 }
 

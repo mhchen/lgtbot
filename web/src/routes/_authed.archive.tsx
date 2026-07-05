@@ -24,7 +24,9 @@ function ArchivePage() {
                 {submission.title}
               </a>
               {submission.discussedAt != null ? (
-                <time>{new Date(submission.discussedAt).toLocaleDateString()}</time>
+                <time>
+                  {new Date(submission.discussedAt).toLocaleDateString()}
+                </time>
               ) : null}
             </li>
           ))}

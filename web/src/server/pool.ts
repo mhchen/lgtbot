@@ -8,20 +8,27 @@ export type PoolRow = Submission & { voteCount: number };
 
 export function sortPoolByVotes(
   pool: Submission[],
-  voteCounts: { submissionId: number; voteCount: number }[],
+  voteCounts: { submissionId: number; voteCount: number }[]
 ): PoolRow[] {
-  const voteMap = new Map(voteCounts.map((vote) => [vote.submissionId, vote.voteCount]));
+  const voteMap = new Map(
+    voteCounts.map((vote) => [vote.submissionId, vote.voteCount])
+  );
   return pool
-    .map((submission) => ({ ...submission, voteCount: voteMap.get(submission.id) ?? 0 }))
+    .map((submission) => ({
+      ...submission,
+      voteCount: voteMap.get(submission.id) ?? 0,
+    }))
     .sort((a, b) => b.voteCount - a.voteCount);
 }
 
 export const getPoolFn = createServerFn({ method: 'GET' }).handler(async () => {
   const member = await requireMemberFn();
-  const { getActivePool, getVoteCountsAllTime, getUserVoteForWeek } = await import(
-    '../../../src/db/book-club-picks'
-  );
+  const { getActivePool, getVoteCountsAllTime, getUserVoteForWeek } =
+    await import('../../../src/db/book-club-picks');
   const rows = sortPoolByVotes(getActivePool(), getVoteCountsAllTime());
-  const currentVote = getUserVoteForWeek(member.userId, getCurrentVotingPeriod());
+  const currentVote = getUserVoteForWeek(
+    member.userId,
+    getCurrentVotingPeriod()
+  );
   return { rows, currentVoteId: currentVote?.submissionId ?? null };
 });

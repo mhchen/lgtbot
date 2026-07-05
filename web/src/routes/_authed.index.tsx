@@ -16,7 +16,9 @@ function PoolPage() {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [pendingDiscussedAt, setPendingDiscussedAt] = useState<number | null>(null);
+  const [pendingDiscussedAt, setPendingDiscussedAt] = useState<number | null>(
+    null
+  );
   const [busy, setBusy] = useState(false);
 
   async function vote(submissionId: number) {
@@ -40,7 +42,9 @@ function PoolPage() {
       setPendingDiscussedAt(null);
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Something went wrong.');
+      setError(
+        caught instanceof Error ? caught.message : 'Something went wrong.'
+      );
     } finally {
       setBusy(false);
     }
@@ -85,7 +89,8 @@ function PoolPage() {
       {pendingDiscussedAt ? (
         <div className="resubmit">
           <span>
-            This was discussed on {new Date(pendingDiscussedAt).toLocaleDateString()}. Submit anyway?
+            This was discussed on{' '}
+            {new Date(pendingDiscussedAt).toLocaleDateString()}. Submit anyway?
           </span>
           <div className="resubmit-actions">
             <button
@@ -108,7 +113,9 @@ function PoolPage() {
       ) : null}
 
       {rows.length === 0 ? (
-        <div className="empty">Nothing in the pool yet. Be the first to submit.</div>
+        <div className="empty">
+          Nothing in the pool yet. Be the first to submit.
+        </div>
       ) : (
         <ul className="pool">
           {rows.map((row) => {
@@ -120,10 +127,17 @@ function PoolPage() {
                   <small>{row.voteCount === 1 ? 'vote' : 'votes'}</small>
                 </div>
                 <div className="pool-main">
-                  <a className="pool-title" href={row.url} target="_blank" rel="noreferrer">
+                  <a
+                    className="pool-title"
+                    href={row.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     {row.title}
                   </a>
-                  {mine ? <span className="pool-mine-tag">Your vote</span> : null}
+                  {mine ? (
+                    <span className="pool-mine-tag">Your vote</span>
+                  ) : null}
                 </div>
                 <button
                   type="button"

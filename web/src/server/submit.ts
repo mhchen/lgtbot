@@ -3,7 +3,7 @@ import { requireMemberFn } from './membership';
 
 export const submitArticleFn = createServerFn({ method: 'POST' })
   .validator(
-    (data: { url: string; title?: string; confirmResubmit?: boolean }) => data,
+    (data: { url: string; title?: string; confirmResubmit?: boolean }) => data
   )
   .handler(async ({ data }) => {
     const member = await requireMemberFn();
@@ -49,15 +49,20 @@ export const submitArticleFn = createServerFn({ method: 'POST' })
 
     const { REST } = await import('discord.js');
     const { Routes } = await import('discord-api-types/v10');
-    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
+    const rest = new REST({ version: '10' }).setToken(
+      process.env.DISCORD_TOKEN!
+    );
 
     const payload = buildVoteMessagePayload(submission);
-    const message = (await rest.post(Routes.channelMessages(BOOK_CLUB_CHANNEL_ID), {
-      body: {
-        content: payload.content,
-        components: payload.components.map((row) => row.toJSON()),
-      },
-    })) as { id: string };
+    const message = (await rest.post(
+      Routes.channelMessages(BOOK_CLUB_CHANNEL_ID),
+      {
+        body: {
+          content: payload.content,
+          components: payload.components.map((row) => row.toJSON()),
+        },
+      }
+    )) as { id: string };
 
     trackVoteMessage({
       submissionId: submission.id,

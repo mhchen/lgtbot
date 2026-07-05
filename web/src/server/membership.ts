@@ -49,5 +49,5 @@ export const requireMemberFn = createServerFn({ method: 'GET' }).handler(
       username: session.data.username,
       avatar: session.data.avatar,
     };
-  },
+  }
 );
