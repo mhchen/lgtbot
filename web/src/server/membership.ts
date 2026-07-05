@@ -1,7 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
 import { redirect } from '@tanstack/react-router';
-import { REST } from 'discord.js';
-import { Routes } from 'discord-api-types/v10';
 import { LGT_GUILD_ID } from './discord';
 import { useAppSession } from './session';
 
@@ -14,12 +12,15 @@ export function isCacheFresh(entry: CacheEntry, now: number): boolean {
 }
 
 const cache = new Map<string, CacheEntry>();
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
 export async function isGuildMember(userId: string): Promise<boolean> {
   const now = Date.now();
   const cached = cache.get(userId);
   if (cached && isCacheFresh(cached, now)) return cached.isMember;
+
+  const { REST } = await import('discord.js');
+  const { Routes } = await import('discord-api-types/v10');
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
   let isMember: boolean;
   try {

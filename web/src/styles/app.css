@@ -1,0 +1,198 @@
+:root {
+  color-scheme: dark;
+
+  --bg: oklch(0.16 0.03 300);
+  --bg-raised: oklch(0.21 0.035 300);
+  --bg-inset: oklch(0.13 0.028 300);
+  --border: oklch(0.34 0.04 300);
+  --border-bright: oklch(0.46 0.06 320);
+
+  --text: oklch(0.94 0.01 300);
+  --text-dim: oklch(0.72 0.02 300);
+  --text-faint: oklch(0.58 0.025 300);
+
+  --cyan: oklch(0.82 0.13 200);
+  --magenta: oklch(0.72 0.18 350);
+  --accent: var(--magenta);
+
+  --radius: 10px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, oklch(0.28 0.09 330 / 0.55), transparent 60%),
+    linear-gradient(oklch(0.55 0.14 320 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.55 0.14 320 / 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem) 4rem;
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5ch;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.wordmark b {
+  color: var(--magenta);
+  text-shadow: 0 0 18px oklch(0.72 0.18 350 / 0.55);
+}
+
+.wordmark span {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.masthead nav {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.masthead nav a {
+  color: var(--text-dim);
+}
+
+h1 {
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.35rem;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  margin: 0 0 2rem;
+  font-size: 0.98rem;
+}
+
+.pool {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.pool-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+}
+
+.pool-row:hover {
+  border-color: var(--border-bright);
+}
+
+.pool-row[data-mine="true"] {
+  border-color: oklch(0.72 0.18 350 / 0.7);
+  background: linear-gradient(oklch(0.72 0.18 350 / 0.06), transparent), var(--bg-raised);
+}
+
+.pool-count {
+  flex: none;
+  min-width: 2.75rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--cyan);
+  line-height: 1;
+}
+
+.pool-count small {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 0.15rem;
+}
+
+.pool-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.pool-title {
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pool-mine-tag {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--magenta);
+}
+
+.empty {
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  color: var(--text-faint);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}

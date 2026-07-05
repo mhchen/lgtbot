@@ -6,7 +6,7 @@ import viteReact from '@vitejs/plugin-react';
 const webRoot = import.meta.dirname;
 const repoRoot = path.resolve(webRoot, '..');
 
-const sqliteDrivers = ['bun:sqlite', 'better-sqlite3'];
+const serverOnly = ['bun:sqlite', 'better-sqlite3', 'discord.js'];
 
 export default defineConfig(({ mode }) => {
   for (const [key, value] of Object.entries(loadEnv(mode, repoRoot, ''))) {
@@ -20,10 +20,10 @@ export default defineConfig(({ mode }) => {
       fs: { allow: [repoRoot] },
     },
     ssr: {
-      external: sqliteDrivers,
+      external: serverOnly,
     },
     optimizeDeps: {
-      exclude: sqliteDrivers,
+      exclude: serverOnly,
     },
     plugins: [tanstackStart(), viteReact()],
   };

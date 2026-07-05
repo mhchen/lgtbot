@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
 } from '@tanstack/react-router';
+import appCss from '../styles/app.css?url';
 
 export const Route = createRootRoute({
   head: () => ({
@@ -13,6 +14,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: 'LGT book club portal' },
     ],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   component: RootComponent,
 });
@@ -20,14 +22,26 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <div className="shell">
+        <header className="masthead">
+          <a href="/" className="wordmark">
+            <b>LGT</b>
+            <span>book club</span>
+          </a>
+          <nav>
+            <a href="/">Pool</a>
+            <a href="/archive">Archive</a>
+          </nav>
+        </header>
+        <Outlet />
+      </div>
     </RootDocument>
   );
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html>
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
