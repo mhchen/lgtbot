@@ -11,6 +11,7 @@ import path from 'path';
 import { bookClubBans } from './db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { isWithinInterval, getYear } from 'date-fns';
+import { BAN_ACHIEVEMENTS } from './book-club-achievements';
 
 const BOOK_CLUB_BANS_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_BANS_CHANNEL_ID || '1390098162256969818';
@@ -42,66 +43,12 @@ function isAprilFoolsDay(): boolean {
   });
 }
 
-const achievementsMap = new Map<number, { title: string; subtitle: string }>([
-  [
-    10,
-    {
-      title: 'The Grasshopper',
-      subtitle:
-        'Still mastering the ancient art of getting ejected from LGT Book Club',
-    },
-  ],
-  [
-    20,
-    {
-      title: 'The Enthusiast',
-      subtitle: 'Collects bans like others collect server emotes',
-    },
-  ],
-  [
-    30,
-    {
-      title: 'The Connoisseur',
-      subtitle: 'Has sampled every possible reason for being banned',
-    },
-  ],
-  [
-    40,
-    {
-      title: 'The Inevitable',
-      subtitle: 'Like death and taxes, their bans are a certainty',
-    },
-  ],
-  [
-    50,
-    {
-      title: 'The Legend',
-      subtitle: 'Their ban history is now required reading for new members',
-    },
-  ],
-  [
-    69,
-    {
-      title: 'Nice',
-      subtitle: 'Nice',
-    },
-  ],
-  [
-    100,
-    {
-      title: 'The Immortal',
-      subtitle:
-        'Somehow still part of the server despite breaking every rule in existence',
-    },
-  ],
-  [
-    250,
-    {
-      title: "You're Noel",
-      subtitle: 'At this point, just change your name',
-    },
-  ],
-]);
+const achievementsMap = new Map<number, { title: string; subtitle: string }>(
+  BAN_ACHIEVEMENTS.map((achievement) => [
+    achievement.threshold,
+    { title: achievement.title, subtitle: achievement.subtitle },
+  ])
+);
 
 const WIELDER_TITLES = [
   'Supreme Ruler',
@@ -286,7 +233,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .run();
 
         await bookClubBansChannel.send(
-          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}`
+          `<@${messageSenderId}> has been banned from LGT Book Club, by order of ${userInfo.title} ${userInfo.name}`
         );
       }
 
@@ -341,7 +288,7 @@ export async function registerBookClubBansListeners(client: Client) {
           .where(eq(bookClubBans.discordUserId, messageSenderId))
           .run();
         await bookClubBansChannel.send(
-          `<@${messageSenderId}> has been brought back into ${getRandomWielderTitle()} ${BANHAMMER_WIELDERS.get(user.id)}'s good graces.`
+          `<@${messageSenderId}> has been brought back into ${userInfo.title} ${userInfo.name}'s good graces.`
         );
       } else {
         db.update(bookClubBans)
