@@ -100,6 +100,31 @@ function fallbackTitle(url: string): string {
   return `${parsed.hostname}${parsed.pathname}`;
 }
 
+export async function resolveSubmissionTitle(
+  rawUrl: string,
+  userTitle?: string | null
+): Promise<string> {
+  return userTitle || (await fetchTitle(rawUrl)) || fallbackTitle(rawUrl);
+}
+
+export function buildVoteMessagePayload(submission: {
+  id: number;
+  title: string;
+  url: string;
+  submittedBy: string;
+}): { content: string; components: ActionRowBuilder<ButtonBuilder>[] } {
+  const voteButton = new ButtonBuilder()
+    .setCustomId(`bookclub-vote-btn-${submission.id}`)
+    .setLabel('Vote for this')
+    .setStyle(ButtonStyle.Primary);
+  return {
+    content: `<@${submission.submittedBy}> submitted: **${submission.title}** - ${submission.url}`,
+    components: [
+      new ActionRowBuilder<ButtonBuilder>().addComponents(voteButton),
+    ],
+  };
+}
+
 async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
   const rawUrl = interaction.options.getString('url', true);
   const userTitle = interaction.options.getString('title');
@@ -159,8 +184,7 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.deferReply();
-  const title =
-    userTitle || (await fetchTitle(rawUrl)) || fallbackTitle(rawUrl);
+  const title = await resolveSubmissionTitle(rawUrl, userTitle);
 
   const submission = createSubmission({
     url: cleanUrl,
@@ -168,17 +192,9 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     submittedBy: interaction.user.id,
   });
 
-  const voteButton = new ButtonBuilder()
-    .setCustomId(`bookclub-vote-btn-${submission.id}`)
-    .setLabel('Vote for this')
-    .setStyle(ButtonStyle.Primary);
-
-  const message = await interaction.editReply({
-    content: `<@${interaction.user.id}> submitted: **${title}** - ${cleanUrl}`,
-    components: [
-      new ActionRowBuilder<ButtonBuilder>().addComponents(voteButton),
-    ],
-  });
+  const message = await interaction.editReply(
+    buildVoteMessagePayload(submission)
+  );
 
   trackVoteMessage({
     submissionId: submission.id,
@@ -522,7 +538,7 @@ export async function handleBookclubPicksCommand(
   }
 }
 
-const BOOK_CLUB_CHANNEL_ID =
+export const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
 const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 1';
 const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 2';

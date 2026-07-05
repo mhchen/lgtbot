@@ -218,10 +218,112 @@ h1 {
   background: transparent;
 }
 
+.submit-form {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.field {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.85rem;
+}
+
+.field::placeholder {
+  color: var(--text-faint);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.submit-form .field:first-of-type {
+  flex: 1;
+}
+
+.submit-form .field:nth-of-type(2) {
+  flex: 0 1 12rem;
+}
+
+.submit-btn {
+  flex: none;
+  font: inherit;
+  font-weight: 600;
+  color: oklch(0.16 0.03 300);
+  background: var(--cyan);
+  border: 1px solid var(--cyan);
+  border-radius: var(--radius);
+  padding: 0 1.3rem;
+  cursor: pointer;
+  transition: filter 0.18s var(--ease-out);
+}
+
+.submit-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.submit-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.form-error {
+  color: oklch(0.72 0.16 25);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.resubmit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+
+.resubmit-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.ghost-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 1.1rem;
+  cursor: pointer;
+}
+
+.ghost-btn:hover {
+  color: var(--text);
+  border-color: var(--border-bright);
+}
+
+.pool {
+  margin-top: 1.5rem;
+}
+
 .empty {
   padding: 2.5rem 1.25rem;
   text-align: center;
   color: var(--text-faint);
   border: 1px dashed var(--border);
   border-radius: var(--radius);
+  margin-top: 1.5rem;
 }
