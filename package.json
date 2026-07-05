@@ -10,21 +10,29 @@
     "db:up": "drizzle-kit up",
     "db:studio": "drizzle-kit studio",
     "dev": "bun run src/index.ts",
+    "web:dev": "vite --config web/vite.config.ts",
+    "web:build": "vite build --config web/vite.config.ts",
+    "web:start": "bun run web/.output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx && prettier --check .",
     "lint:fix": "eslint . --ext .ts,.tsx --fix && prettier --write .",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "latest",
     "@types/number-to-words": "^1.2.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.29.0",
     "@typescript-eslint/parser": "^8.29.0",
+    "@vitejs/plugin-react": "^6.0.3",
     "drizzle-kit": "^0.30.6",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "vite": "^8.1.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -32,8 +40,12 @@
   "dependencies": {
     "@date-fns/tz": "^1.4.1",
     "@libsql/client": "^0.15.2",
+    "@tanstack/react-router": "^1.170.17",
+    "@tanstack/react-start": "^1.168.27",
     "@types/express": "^5.0.0",
+    "arctic": "^3.7.0",
     "axios": "^1.7.9",
+    "better-sqlite3": "^12.11.1",
     "croner": "^10.0.1",
     "date-fns": "^4.1.0",
     "discord.js": "^14.16.3",
@@ -43,6 +55,8 @@
     "picocolors": "^1.1.1",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "syllable": "^5.0.1"
   }
 }
