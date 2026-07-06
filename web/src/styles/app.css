@@ -237,6 +237,78 @@ a:hover {
   text-decoration: none;
 }
 
+/* nav collapses behind a toggle on narrow screens (see media query below) */
+.marquee__menu {
+  display: contents;
+}
+
+.marquee__toggle {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    border-color 0.18s var(--ease),
+    box-shadow 0.18s var(--ease);
+}
+
+.marquee__toggle:hover {
+  border-color: var(--border-glow);
+  box-shadow: var(--glow-cyan);
+}
+
+.marquee__bars {
+  position: relative;
+  display: block;
+  width: 1.25rem;
+  height: 0.85rem;
+}
+
+.marquee__bars span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    top 0.2s var(--ease),
+    opacity 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+
+.marquee__bars span:nth-child(1) {
+  top: 0;
+}
+
+.marquee__bars span:nth-child(2) {
+  top: calc(50% - 1px);
+}
+
+.marquee__bars span:nth-child(3) {
+  top: calc(100% - 2px);
+}
+
+.marquee__bars[data-open='true'] span:nth-child(1) {
+  top: calc(50% - 1px);
+  transform: rotate(45deg);
+}
+
+.marquee__bars[data-open='true'] span:nth-child(2) {
+  opacity: 0;
+}
+
+.marquee__bars[data-open='true'] span:nth-child(3) {
+  top: calc(50% - 1px);
+  transform: rotate(-45deg);
+}
+
 /* page hero */
 .hero {
   padding: clamp(2.5rem, 7vw, 4.5rem) 0 clamp(1.5rem, 4vw, 2.5rem);
@@ -374,16 +446,37 @@ h1 {
 
 .submit__form {
   display: flex;
+  align-items: flex-end;
   gap: 0.6rem;
 }
 
-.submit__form .field:first-of-type {
-  flex: 1;
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 0 1 13rem;
   min-width: 0;
 }
 
-.submit__form .field:nth-of-type(2) {
-  flex: 0 1 12rem;
+.field-group--grow {
+  flex: 1 1 auto;
+}
+
+.field-group .field {
+  width: 100%;
+}
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding-left: 0.15rem;
+}
+
+.field-label__hint {
+  color: var(--text-faint);
 }
 
 .form-error {
@@ -754,6 +847,7 @@ h1 {
 }
 
 .haiku {
+  margin: 0;
   position: relative;
   overflow: hidden;
   padding: 1.4rem 1.5rem;
@@ -777,9 +871,16 @@ h1 {
 .haiku__lines {
   margin: 0;
   font-style: italic;
-  font-size: 1.05rem;
-  line-height: 1.75;
+  font-size: 1rem;
+  line-height: 1.65;
   color: var(--text);
+  text-wrap: pretty;
+}
+
+.haiku__line {
+  display: block;
+  padding-left: 1.15em;
+  text-indent: -1.15em;
 }
 
 .haiku__attr {
@@ -808,13 +909,69 @@ h1 {
   }
 }
 
+@media (max-width: 760px) {
+  .marquee {
+    gap: 1rem;
+  }
+
+  .marquee__toggle {
+    display: inline-flex;
+  }
+
+  .marquee__menu {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.35rem clamp(1rem, 4vw, 2rem) 0.85rem;
+    background: oklch(0.15 0.05 300 / 0.98);
+    border-bottom: 1px solid var(--border);
+    box-shadow:
+      0 14px 26px oklch(0.1 0.04 300 / 0.55),
+      0 1px 0 oklch(0.58 0.12 330 / 0.35);
+    backdrop-filter: blur(8px);
+  }
+
+  .marquee__menu[data-open='false'] {
+    display: none;
+  }
+
+  .marquee__nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin-right: 0;
+    overflow: visible;
+  }
+
+  .marquee__nav .nav-link {
+    padding: 0.75rem 0.15rem;
+    font-size: 0.9rem;
+  }
+
+  .marquee__menu .marquee__logout {
+    padding: 0.75rem 0.15rem;
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+  }
+}
+
 @media (max-width: 620px) {
   .submit__form {
     flex-wrap: wrap;
+    align-items: stretch;
   }
 
-  .submit__form .field:first-of-type,
-  .submit__form .field:nth-of-type(2) {
+  .field-group,
+  .field-group--grow {
     flex: 1 1 100%;
+  }
+
+  .submit__form .btn-primary {
+    align-self: flex-start;
   }
 }

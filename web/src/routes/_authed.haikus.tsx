@@ -26,9 +26,8 @@ function HaikusPage() {
             <figure key={haiku.id} className="haiku">
               <p className="haiku__lines">
                 {haiku.lines.map((line, index) => (
-                  <span key={index}>
+                  <span key={index} className="haiku__line">
                     {line}
-                    {index < haiku.lines.length - 1 ? <br /> : null}
                   </span>
                 ))}
               </p>

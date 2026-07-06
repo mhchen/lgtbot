@@ -66,23 +66,35 @@ function PoolPage() {
             submit(false);
           }}
         >
-          <input
-            className="field"
-            type="url"
-            value={url}
-            onChange={(event) => {
-              setUrl(event.target.value);
-              setPendingDiscussedAt(null);
-            }}
-            placeholder="Paste an article URL"
-            required
-          />
-          <input
-            className="field"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Title (optional)"
-          />
+          <div className="field-group field-group--grow">
+            <label className="field-label" htmlFor="submit-url">
+              Article URL
+            </label>
+            <input
+              id="submit-url"
+              className="field"
+              type="url"
+              value={url}
+              onChange={(event) => {
+                setUrl(event.target.value);
+                setPendingDiscussedAt(null);
+              }}
+              placeholder="https://…"
+              required
+            />
+          </div>
+          <div className="field-group">
+            <label className="field-label" htmlFor="submit-title">
+              Title <span className="field-label__hint">(optional)</span>
+            </label>
+            <input
+              id="submit-title"
+              className="field"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="We'll fetch it"
+            />
+          </div>
           <button type="submit" className="btn btn-primary" disabled={busy}>
             {busy ? 'Working…' : 'Submit'}
           </button>
