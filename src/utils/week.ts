@@ -28,13 +28,13 @@ export function getWeekDateRange(weekIdentifier: string): {
   return { start, end };
 }
 
-const VOTING_PERIOD_TIMEZONE = 'America/New_York';
+const VOTING_PERIOD_TIMEZONE = 'America/Los_Angeles';
 const VOTING_PERIOD_CUTOFF_HOUR = 9;
-const TUESDAY = 2;
+const SATURDAY = 6;
 
-// Returns an identifier like "2026-04-07" marking the Tuesday 9am ET boundary
-// of the current book club voting period. Periods run Tue 9am ET → next Tue 9am ET
-// so they align with the close cron and a vote cast Tue 8:59am ET still lands in
+// Returns an identifier like "2026-04-04" marking the Saturday 9am PT boundary
+// of the current book club voting period. Periods run Sat 9am PT → next Sat 9am PT
+// so they align with the close cron and a vote cast Sat 8:59am PT still lands in
 // the period that's about to be closed.
 export function getCurrentVotingPeriod(now: Date = new Date()): string {
   const zoned = new TZDate(now.getTime(), VOTING_PERIOD_TIMEZONE);
@@ -42,11 +42,11 @@ export function getCurrentVotingPeriod(now: Date = new Date()): string {
   const hour = zoned.getHours();
 
   const daysBack =
-    dayOfWeek === TUESDAY
+    dayOfWeek === SATURDAY
       ? hour >= VOTING_PERIOD_CUTOFF_HOUR
         ? 0
         : 7
-      : (dayOfWeek - TUESDAY + 7) % 7;
+      : (dayOfWeek - SATURDAY + 7) % 7;
 
   return format(subDays(zoned, daysBack), 'yyyy-MM-dd');
 }
