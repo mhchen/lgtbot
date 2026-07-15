@@ -2,8 +2,17 @@ import { Client, Message } from 'discord.js';
 import converter from 'number-to-words';
 import { syllable } from 'syllable';
 import { logger } from './logger';
+import { saveHaiku } from './db/haiku';
+
+// Overrides for words the syllable library miscounts
+const SYLLABLE_OVERRIDES: Record<string, number> = {
+  noel: 2,
+  noels: 2,
+};
 
 function getSyllables(word: string): number {
+  const lower = word.toLowerCase();
+  if (SYLLABLE_OVERRIDES[lower] !== undefined) return SYLLABLE_OVERRIDES[lower];
   if (/^\d+$/.test(word)) {
     const asWords = converter.toWords(Number(word));
     if (asWords) return syllable(asWords);
@@ -76,9 +85,18 @@ export function registerHaikuListeners(client: Client): void {
         `— ${displayName}`,
       ].join('\n');
 
-      await message.reply({
+      const reply = await message.reply({
         content: formatted,
         allowedMentions: { parse: [] },
+      });
+
+      await saveHaiku({
+        originalMessageId: message.id,
+        haikuMessageId: reply.id,
+        channelId: message.channelId,
+        originalText: message.content,
+        haikuText: haikuLines.join('\n'),
+        authorUserId: message.author.id,
       });
 
       logger.info({

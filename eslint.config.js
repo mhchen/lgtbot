@@ -3,8 +3,10 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import globals from 'globals';
 
 export default [
+  { ignores: ['**/dist/**', 'web/src/routeTree.gen.ts'] },
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs'],
@@ -38,6 +40,12 @@ export default [
           varsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['web/**/*.ts', 'web/**/*.tsx'],
+    languageOptions: {
+      globals: globals.browser,
     },
   },
   {

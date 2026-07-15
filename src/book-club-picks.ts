@@ -35,6 +35,7 @@ import {
 } from './db/book-club-picks';
 import { getCurrentVotingPeriod } from './utils/week';
 import { logger } from './logger';
+import { decode } from 'html-entities';
 
 const STALE_SUBMISSION_DAYS = 14;
 
@@ -89,7 +90,7 @@ export async function fetchTitle(url: string): Promise<string | null> {
     const response = await fetch(url, { signal: controller.signal });
     const html = await response.text();
     const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    return match ? match[1].trim() : null;
+    return match ? decode(match[1]).trim() : null;
   } catch {
     return null;
   } finally {
@@ -101,6 +102,31 @@ export async function fetchTitle(url: string): Promise<string | null> {
 function fallbackTitle(url: string): string {
   const parsed = new URL(url);
   return `${parsed.hostname}${parsed.pathname}`;
+}
+
+export async function resolveSubmissionTitle(
+  rawUrl: string,
+  userTitle?: string | null
+): Promise<string> {
+  return userTitle || (await fetchTitle(rawUrl)) || fallbackTitle(rawUrl);
+}
+
+export function buildVoteMessagePayload(submission: {
+  id: number;
+  title: string;
+  url: string;
+  submittedBy: string;
+}): { content: string; components: ActionRowBuilder<ButtonBuilder>[] } {
+  const voteButton = new ButtonBuilder()
+    .setCustomId(`bookclub-vote-btn-${submission.id}`)
+    .setLabel('Vote for this')
+    .setStyle(ButtonStyle.Primary);
+  return {
+    content: `<@${submission.submittedBy}> submitted: **${submission.title}** - ${submission.url}`,
+    components: [
+      new ActionRowBuilder<ButtonBuilder>().addComponents(voteButton),
+    ],
+  };
 }
 
 async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
@@ -162,8 +188,7 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
   }
 
   await interaction.deferReply();
-  const title =
-    userTitle || (await fetchTitle(rawUrl)) || fallbackTitle(rawUrl);
+  const title = await resolveSubmissionTitle(rawUrl, userTitle);
 
   const submission = createSubmission({
     url: cleanUrl,
@@ -171,17 +196,9 @@ async function handleSubmitCommand(interaction: ChatInputCommandInteraction) {
     submittedBy: interaction.user.id,
   });
 
-  const voteButton = new ButtonBuilder()
-    .setCustomId(`bookclub-vote-btn-${submission.id}`)
-    .setLabel('Vote for this')
-    .setStyle(ButtonStyle.Primary);
-
-  const message = await interaction.editReply({
-    content: `<@${interaction.user.id}> submitted: **${title}** - ${cleanUrl}`,
-    components: [
-      new ActionRowBuilder<ButtonBuilder>().addComponents(voteButton),
-    ],
-  });
+  const message = await interaction.editReply(
+    buildVoteMessagePayload(submission)
+  );
 
   trackVoteMessage({
     submissionId: submission.id,
@@ -525,7 +542,7 @@ export async function handleBookclubPicksCommand(
   }
 }
 
-const BOOK_CLUB_CHANNEL_ID =
+export const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
 const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 5';
 const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 6';

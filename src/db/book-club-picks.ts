@@ -172,6 +172,15 @@ export function getRecentlyDiscussed(limit: number) {
     .all();
 }
 
+export function getAllDiscussed() {
+  return db
+    .select()
+    .from(bookClubSubmissions)
+    .where(isNotNull(bookClubSubmissions.discussedAt))
+    .orderBy(desc(bookClubSubmissions.discussedAt))
+    .all();
+}
+
 export function trackVoteMessage(data: {
   submissionId: number;
   messageId: string;

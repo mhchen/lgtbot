@@ -176,3 +176,11 @@ dist
 
 # SQLite database files
 *.db
+*.db-shm
+*.db-wal
+
+# TanStack Start web build/generated artifacts
+web/src/routeTree.gen.ts
+web/.output
+web/.nitro
+web/.tanstack
