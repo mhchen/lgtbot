@@ -10,7 +10,10 @@ import {
   EmbedBuilder,
   Client,
   TextChannel,
+  ComponentType,
   type Interaction,
+  type ActionRow,
+  type MessageActionRowComponent,
 } from 'discord.js';
 import { Cron } from 'croner';
 import { subDays } from 'date-fns';
@@ -604,17 +607,22 @@ async function closeVoting(client: Client) {
         vm.channelId
       )) as TextChannel;
       const msg = await msgChannel.messages.fetch(vm.messageId);
-      const disabledRows = msg.components.map((row) => {
-        const newRow = new ActionRowBuilder<ButtonBuilder>();
-        row.components.forEach((c) => {
-          newRow.addComponents(
-            new ButtonBuilder(
-              c.data as ConstructorParameters<typeof ButtonBuilder>[0]
-            ).setDisabled(true)
-          );
+      const disabledRows = msg.components
+        .filter(
+          (row): row is ActionRow<MessageActionRowComponent> =>
+            row.type === ComponentType.ActionRow
+        )
+        .map((row) => {
+          const newRow = new ActionRowBuilder<ButtonBuilder>();
+          row.components.forEach((c) => {
+            newRow.addComponents(
+              new ButtonBuilder(
+                c.data as ConstructorParameters<typeof ButtonBuilder>[0]
+              ).setDisabled(true)
+            );
+          });
+          return newRow;
         });
-        return newRow;
-      });
       await msg.edit({ components: disabledRows });
     } catch (error) {
       logger.warn(
