@@ -541,9 +541,11 @@ export async function handleBookclubPicksCommand(
 
 export const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
-const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 1';
-const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 2';
-const CRON_TIMEZONE = 'America/New_York';
+const REMINDER_CRON = process.env.BOOKCLUB_REMINDER_CRON || '0 9 * * 5';
+const CLOSE_CRON = process.env.BOOKCLUB_CLOSE_CRON || '0 9 * * 6';
+// Pacific so 9am lands last across US timezones (10am MT / 11am CT / 12pm ET) -
+// nobody sees the reminder/close before 9am their local time.
+const CRON_TIMEZONE = 'America/Los_Angeles';
 
 async function closeVoting(client: Client) {
   const channel = (await client.channels.fetch(
@@ -656,7 +658,7 @@ async function handleCloseCommand(interaction: ChatInputCommandInteraction) {
 }
 
 export function registerBookClubPicksCron(client: Client) {
-  // Monday reminder
+  // Friday reminder
   new Cron(
     REMINDER_CRON,
     {
@@ -699,7 +701,7 @@ export function registerBookClubPicksCron(client: Client) {
     }
   );
 
-  // Tuesday close
+  // Saturday close
   new Cron(
     CLOSE_CRON,
     {

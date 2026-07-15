@@ -63,45 +63,45 @@ describe('normalizeUrl', () => {
 });
 
 describe('getCurrentVotingPeriod', () => {
-  // April 2026 is EDT (UTC-4). Tuesday 2026-04-07 09:00 EDT = 13:00 UTC.
-  test('right at Tue 9am ET rolls to the new period', () => {
-    const nowUtc = new Date('2026-04-07T13:00:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  // April 2026 is PDT (UTC-7). Saturday 2026-04-04 09:00 PDT = 16:00 UTC.
+  test('right at Sat 9am PT rolls to the new period', () => {
+    const nowUtc = new Date('2026-04-04T16:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-04');
   });
 
-  test('one minute before Tue 9am ET still belongs to the previous period', () => {
-    const nowUtc = new Date('2026-04-07T12:59:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-03-31');
+  test('one minute before Sat 9am PT still belongs to the previous period', () => {
+    const nowUtc = new Date('2026-04-04T15:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-03-28');
   });
 
-  test('mid-week defaults to the most recent Tuesday 9am ET', () => {
-    // Wednesday 2026-04-08 12:00 EDT = 16:00 UTC
-    const nowUtc = new Date('2026-04-08T16:00:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  test('mid-week defaults to the most recent Saturday 9am PT', () => {
+    // Wednesday 2026-04-08 12:00 PDT = 19:00 UTC
+    const nowUtc = new Date('2026-04-08T19:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-04');
   });
 
-  test('sunday still maps back to the prior Tuesday', () => {
-    // Sunday 2026-04-12 10:00 EDT = 14:00 UTC
-    const nowUtc = new Date('2026-04-12T14:00:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  test('sunday still maps back to the prior Saturday', () => {
+    // Sunday 2026-04-05 10:00 PDT = 17:00 UTC
+    const nowUtc = new Date('2026-04-05T17:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-04');
   });
 
-  test('monday 11pm ET still belongs to the prior Tuesday', () => {
-    // Monday 2026-04-13 23:59 EDT = Tuesday 2026-04-14 03:59 UTC
-    const nowUtc = new Date('2026-04-14T03:59:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-07');
+  test('friday 11pm PT still belongs to the prior Saturday', () => {
+    // Friday 2026-04-10 23:59 PDT = Saturday 2026-04-11 06:59 UTC
+    const nowUtc = new Date('2026-04-11T06:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-04-04');
   });
 
-  test('handles standard time (EST) correctly', () => {
-    // Tuesday 2026-01-06 09:00 EST = 14:00 UTC
-    const nowUtc = new Date('2026-01-06T14:00:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-01-06');
+  test('handles standard time (PST) correctly', () => {
+    // Saturday 2026-01-03 09:00 PST = 17:00 UTC
+    const nowUtc = new Date('2026-01-03T17:00:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2026-01-03');
   });
 
   test('handles standard time boundary one minute early', () => {
-    // Tuesday 2026-01-06 08:59 EST = 13:59 UTC → previous period
-    const nowUtc = new Date('2026-01-06T13:59:00Z');
-    expect(getCurrentVotingPeriod(nowUtc)).toBe('2025-12-30');
+    // Saturday 2026-01-03 08:59 PST = 16:59 UTC → previous period
+    const nowUtc = new Date('2026-01-03T16:59:00Z');
+    expect(getCurrentVotingPeriod(nowUtc)).toBe('2025-12-27');
   });
 });
 
