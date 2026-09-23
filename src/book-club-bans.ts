@@ -14,7 +14,7 @@ import { isWithinInterval, getYear } from 'date-fns';
 import { BAN_ACHIEVEMENTS } from './book-club-achievements';
 
 const BOOK_CLUB_BANS_CHANNEL_ID =
-  process.env.LGT_BOOK_CLUB_BANS_CHANNEL_ID || '1390098162256969818';
+  process.env.LGT_BOOK_CLUB_BANS_CHANNEL_ID || '1552449646054477854';
 const BOOK_CLUB_CHANNEL_ID =
   process.env.LGT_BOOK_CLUB_CHANNEL_ID || '1320549426007375994';
 const BANHAMMER_WIELDERS = new Map<string, string>([
