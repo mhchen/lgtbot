@@ -25,6 +25,7 @@ import { handleCommand as handleTwitchCommand } from './twitch';
 import { handleGoalsCommand, handleGoalInteraction } from './goals';
 import { registerAcronymListeners } from './acronyms';
 import { registerHaikuListeners } from './haiku';
+import { registerVerificationListeners } from './verification';
 
 const client = new Client({
   intents: [
@@ -50,6 +51,7 @@ client.once('ready', async () => {
   registerKudosListeners(client);
   registerAcronymListeners(client);
   registerHaikuListeners(client);
+  registerVerificationListeners(client);
   registerBookClubPicksCron(client);
   startWebhookServer({
     client,

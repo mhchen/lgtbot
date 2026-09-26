@@ -5,7 +5,10 @@ import type { Message, MessageReaction, User } from 'discord.js';
 
 let eventHandlers: Record<string, ((...args: any[]) => Promise<void>)[]> = {};
 
-export const mockDiscordChannel = { send: mock() };
+export const mockDiscordChannel = {
+  isTextBased: () => true,
+  send: mock(),
+};
 export const mockDiscordClient = {
   on: (event: string, handler: (...args: any[]) => Promise<void>) => {
     if (!eventHandlers[event]) {
