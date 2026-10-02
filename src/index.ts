@@ -25,6 +25,10 @@ import { handleCommand as handleTwitchCommand } from './twitch';
 import { handleGoalsCommand, handleGoalInteraction } from './goals';
 import { registerAcronymListeners } from './acronyms';
 import { registerHaikuListeners } from './haiku';
+import {
+  handleExpiringMessageCommand,
+  startExpiringMessageWorker,
+} from './expiring-messages';
 
 const client = new Client({
   intents: [
@@ -51,6 +55,7 @@ client.once('ready', async () => {
   registerAcronymListeners(client);
   registerHaikuListeners(client);
   registerBookClubPicksCron(client);
+  startExpiringMessageWorker(client);
   startWebhookServer({
     client,
     channelId: process.env.NOTIFICATION_CHANNEL_ID!,
@@ -109,6 +114,10 @@ client.on('interactionCreate', (interaction) =>
 
         case 'goals':
           await handleGoalsCommand(interaction);
+          break;
+
+        case 'message':
+          await handleExpiringMessageCommand(interaction);
           break;
       }
     } else {

@@ -105,6 +105,16 @@ const TEST_SCHEMA = `
 
   CREATE INDEX IF NOT EXISTS haikus_author_idx ON haikus(author_user_id);
   CREATE UNIQUE INDEX IF NOT EXISTS haikus_original_message_unique_idx ON haikus(original_message_id);
+
+  CREATE TABLE IF NOT EXISTS expiring_messages (
+    message_id TEXT PRIMARY KEY NOT NULL,
+    guild_id TEXT NOT NULL,
+    channel_id TEXT NOT NULL,
+    author_id TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS expiring_messages_expires_at_idx ON expiring_messages(expires_at);
 `;
 
 async function createDb(): Promise<AppDb> {

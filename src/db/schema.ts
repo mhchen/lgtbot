@@ -152,3 +152,17 @@ export const bookClubVoteMessages = sqliteTable(
     ),
   })
 );
+
+export const expiringMessages = sqliteTable(
+  'expiring_messages',
+  {
+    messageId: text('message_id').primaryKey(),
+    guildId: text('guild_id').notNull(),
+    channelId: text('channel_id').notNull(),
+    authorId: text('author_id').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => ({
+    expiresAtIdx: index('expiring_messages_expires_at_idx').on(table.expiresAt),
+  })
+);
