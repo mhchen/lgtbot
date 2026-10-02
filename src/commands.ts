@@ -1,13 +1,22 @@
-import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import {
+  ApplicationIntegrationType,
+  InteractionContextType,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { logger } from './logger';
 import { getKudosCommands } from './kudos';
 import { getBookClubPicksCommands } from './book-club-picks';
 import { getTwitchCommands } from './twitch';
 import { getGoalsCommands } from './goals';
+import { getExpiringMessageCommand } from './expiring-messages';
 
-const lgtCommand = new SlashCommandBuilder()
+export const lgtCommand = new SlashCommandBuilder()
   .setName('lgt')
-  .setDescription('LGT Bot commands');
+  .setDescription('LGT Bot commands')
+  .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
+  .setContexts(InteractionContextType.Guild);
 
 const commands = [
   lgtCommand
@@ -27,7 +36,13 @@ const commands = [
       return group;
     })
     .addSubcommandGroup(getTwitchCommands())
-    .addSubcommandGroup(getGoalsCommands()),
+    .addSubcommandGroup(getGoalsCommands())
+    .addSubcommandGroup((group) =>
+      group
+        .setName('message')
+        .setDescription('Messages that disappear later')
+        .addSubcommand(getExpiringMessageCommand())
+    ),
 ];
 
 export async function registerCommands() {
