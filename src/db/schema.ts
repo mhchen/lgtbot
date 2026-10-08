@@ -152,3 +152,19 @@ export const bookClubVoteMessages = sqliteTable(
     ),
   })
 );
+
+export const bookClubPickSubscribers = sqliteTable(
+  'book_club_pick_subscribers',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: text('user_id').notNull(),
+    subscribedAt: integer('subscribed_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .default(sql`(strftime('%s', 'now') * 1000)`),
+  },
+  (table) => ({
+    userUnique: uniqueIndex('bc_pick_subscribers_user_unique_idx').on(
+      table.userId
+    ),
+  })
+);

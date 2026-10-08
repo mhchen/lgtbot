@@ -29,6 +29,9 @@ import {
   getVoteMessagesForSubmission,
   getVoteMessagesForSubmissions,
   expireStaleSubmissions,
+  addPickSubscriber,
+  removePickSubscriber,
+  getPickSubscriberIds,
 } from './db/book-club-picks';
 import { getCurrentVotingPeriod } from './utils/week';
 import { logger } from './logger';
@@ -516,11 +519,55 @@ async function handleHistoryCommand(interaction: ChatInputCommandInteraction) {
   await interaction.reply({ embeds: [embed] });
 }
 
+async function handleSubscribeCommand(
+  interaction: ChatInputCommandInteraction
+) {
+  addPickSubscriber(interaction.user.id);
+  await interaction.reply({
+    content:
+      "You'll get a DM when each week's article is picked. Check that your privacy settings allow DMs from this server. Use `/lgt bookclub unsubscribe` to stop.",
+    ephemeral: true,
+  });
+}
+
+async function handleUnsubscribeCommand(
+  interaction: ChatInputCommandInteraction
+) {
+  removePickSubscriber(interaction.user.id);
+  await interaction.reply({
+    content: "You won't get a DM about the weekly article anymore.",
+    ephemeral: true,
+  });
+}
+
+export async function notifyPickSubscribers({
+  client,
+  winner,
+}: {
+  client: Client;
+  winner: { title: string; url: string };
+}) {
+  const content = `This week's book club article is **${winner.title}**\n${winner.url}\n-# Use \`/lgt bookclub unsubscribe\` to stop these DMs.`;
+  for (const userId of getPickSubscriberIds()) {
+    try {
+      await client.users.send(userId, content);
+    } catch (error) {
+      logger.warn(error, `Failed to DM the book club pick to user ${userId}`);
+    }
+  }
+}
+
 export async function handleBookclubPicksCommand(
   interaction: ChatInputCommandInteraction
 ) {
   const subcommand = interaction.options.getSubcommand();
   switch (subcommand) {
+    case 'subscribe':
+      await handleSubscribeCommand(interaction);
+      break;
+    case 'unsubscribe':
+      await handleUnsubscribeCommand(interaction);
+      break;
     case 'submit':
       await handleSubmitCommand(interaction);
       break;
@@ -602,6 +649,7 @@ async function closeVoting(client: Client) {
   }
 
   await channel.send({ embeds: [embed] });
+  await notifyPickSubscribers({ client, winner });
 
   if (expired.length > 0) {
     const expiredList = expired
@@ -742,6 +790,12 @@ export function getBookClubPicksCommands(): SlashCommandSubcommandBuilder[] {
     new SlashCommandSubcommandBuilder()
       .setName('history')
       .setDescription('View recently discussed articles'),
+    new SlashCommandSubcommandBuilder()
+      .setName('subscribe')
+      .setDescription("Get a DM when each week's article is picked"),
+    new SlashCommandSubcommandBuilder()
+      .setName('unsubscribe')
+      .setDescription('Stop the weekly article DMs'),
     new SlashCommandSubcommandBuilder()
       .setName('close')
       .setDescription('Close voting and pick a winner (moderator only)'),

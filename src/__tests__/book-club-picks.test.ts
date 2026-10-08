@@ -1,4 +1,5 @@
-import { describe, expect, test, beforeEach } from 'bun:test';
+import { describe, expect, test, beforeEach, mock } from 'bun:test';
+import type { Client } from 'discord.js';
 import { sql } from 'drizzle-orm';
 import { subDays } from 'date-fns';
 import { db } from '../db/index';
@@ -6,6 +7,7 @@ import {
   bookClubSubmissions,
   bookClubVotes,
   bookClubVoteMessages,
+  bookClubPickSubscribers,
 } from '../db/schema';
 import {
   createSubmission,
@@ -20,8 +22,15 @@ import {
   getVoteMessagesForSubmission,
   getVoteCountsAllTime,
   expireStaleSubmissions,
+  addPickSubscriber,
+  removePickSubscriber,
+  getPickSubscriberIds,
 } from '../db/book-club-picks';
-import { normalizeUrl, selectWinner } from '../book-club-picks';
+import {
+  normalizeUrl,
+  selectWinner,
+  notifyPickSubscribers,
+} from '../book-club-picks';
 import { getCurrentVotingPeriod } from '../utils/week';
 
 describe('normalizeUrl', () => {
@@ -541,5 +550,83 @@ describe('book club picks DB', () => {
     const messages = getVoteMessagesForSubmission(submission.id);
     expect(messages).toHaveLength(1);
     expect(messages[0].messageId).toBe('msg123');
+  });
+});
+
+describe('book club pick subscribers', () => {
+  beforeEach(() => {
+    db.delete(bookClubPickSubscribers).run();
+  });
+
+  test('subscribing twice keeps one row for the user', () => {
+    addPickSubscriber('user1');
+    addPickSubscriber('user1');
+
+    expect(getPickSubscriberIds()).toEqual(['user1']);
+  });
+
+  test('unsubscribing removes only that user', () => {
+    addPickSubscriber('user1');
+    addPickSubscriber('user2');
+
+    removePickSubscriber('user1');
+
+    expect(getPickSubscriberIds()).toEqual(['user2']);
+  });
+
+  describe('notifyPickSubscribers', () => {
+    const winner = { title: 'Great article', url: 'https://example.com/a' };
+
+    test('sends the title and URL to every subscriber', async () => {
+      addPickSubscriber('user1');
+      addPickSubscriber('user2');
+      const send = mock<(userId: string, content: string) => Promise<void>>(
+        () => Promise.resolve()
+      );
+
+      await notifyPickSubscribers({
+        client: { users: { send } } as unknown as Client,
+        winner,
+      });
+
+      expect(send.mock.calls.map(([userId]) => userId)).toEqual([
+        'user1',
+        'user2',
+      ]);
+      const [, content] = send.mock.calls[0];
+      expect(content).toContain('Great article');
+      expect(content).toContain('https://example.com/a');
+    });
+
+    test('keeps going when one subscriber cannot receive DMs', async () => {
+      addPickSubscriber('user1');
+      addPickSubscriber('user2');
+      const send = mock((userId: string) =>
+        userId === 'user1'
+          ? Promise.reject(new Error('Cannot send messages to this user'))
+          : Promise.resolve()
+      );
+
+      await notifyPickSubscribers({
+        client: { users: { send } } as unknown as Client,
+        winner,
+      });
+
+      expect(send.mock.calls.map(([userId]) => userId)).toEqual([
+        'user1',
+        'user2',
+      ]);
+    });
+
+    test('sends nothing when nobody subscribed', async () => {
+      const send = mock(() => Promise.resolve());
+
+      await notifyPickSubscribers({
+        client: { users: { send } } as unknown as Client,
+        winner,
+      });
+
+      expect(send).not.toHaveBeenCalled();
+    });
   });
 });

@@ -92,6 +92,14 @@ const TEST_SCHEMA = `
 
   CREATE INDEX IF NOT EXISTS bc_vote_messages_submission_idx ON book_club_vote_messages(submission_id);
 
+  CREATE TABLE IF NOT EXISTS book_club_pick_subscribers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    subscribed_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS bc_pick_subscribers_user_unique_idx ON book_club_pick_subscribers(user_id);
+
   CREATE TABLE IF NOT EXISTS haikus (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     original_message_id TEXT NOT NULL,

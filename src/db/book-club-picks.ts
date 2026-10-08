@@ -3,6 +3,7 @@ import {
   bookClubSubmissions,
   bookClubVotes,
   bookClubVoteMessages,
+  bookClubPickSubscribers,
 } from './schema';
 import { eq, and, isNull, isNotNull, desc, sql, inArray } from 'drizzle-orm';
 
@@ -212,4 +213,25 @@ export function getVoteMessagesForSubmissions(submissionIds: number[]) {
     .from(bookClubVoteMessages)
     .where(inArray(bookClubVoteMessages.submissionId, submissionIds))
     .all();
+}
+
+export function addPickSubscriber(userId: string) {
+  db.insert(bookClubPickSubscribers)
+    .values({ userId })
+    .onConflictDoNothing()
+    .run();
+}
+
+export function removePickSubscriber(userId: string) {
+  db.delete(bookClubPickSubscribers)
+    .where(eq(bookClubPickSubscribers.userId, userId))
+    .run();
+}
+
+export function getPickSubscriberIds() {
+  return db
+    .select({ userId: bookClubPickSubscribers.userId })
+    .from(bookClubPickSubscribers)
+    .all()
+    .map((subscriber) => subscriber.userId);
 }
