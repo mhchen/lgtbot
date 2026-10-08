@@ -21,11 +21,9 @@ function PoolPage() {
     null
   );
   const [busy, setBusy] = useState(false);
-  const [pendingSubscribed, setPendingSubscribed] = useState<boolean | null>(
-    null
-  );
+  const [dmOn, setDmOn] = useState(subscribed);
+  const [savingSubscription, setSavingSubscription] = useState(false);
   const [subscriptionFailed, setSubscriptionFailed] = useState(false);
-  const dmOn = pendingSubscribed ?? subscribed;
 
   async function vote(submissionId: number) {
     await castVoteFn({ data: { submissionId } });
@@ -33,17 +31,18 @@ function PoolPage() {
   }
 
   async function toggleSubscription() {
-    if (pendingSubscribed != null) return;
-    const next = !subscribed;
-    setPendingSubscribed(next);
+    if (savingSubscription) return;
+    const next = !dmOn;
+    setDmOn(next);
+    setSavingSubscription(true);
     setSubscriptionFailed(false);
     try {
       await setPickSubscriptionFn({ data: { subscribed: next } });
-      await router.invalidate();
     } catch {
+      setDmOn(!next);
       setSubscriptionFailed(true);
     } finally {
-      setPendingSubscribed(null);
+      setSavingSubscription(false);
     }
   }
 
