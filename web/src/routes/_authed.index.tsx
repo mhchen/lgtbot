@@ -21,6 +21,11 @@ function PoolPage() {
     null
   );
   const [busy, setBusy] = useState(false);
+  const [pendingSubscribed, setPendingSubscribed] = useState<boolean | null>(
+    null
+  );
+  const [subscriptionFailed, setSubscriptionFailed] = useState(false);
+  const dmOn = pendingSubscribed ?? subscribed;
 
   async function vote(submissionId: number) {
     await castVoteFn({ data: { submissionId } });
@@ -28,8 +33,18 @@ function PoolPage() {
   }
 
   async function toggleSubscription() {
-    await setPickSubscriptionFn({ data: { subscribed: !subscribed } });
-    await router.invalidate();
+    if (pendingSubscribed != null) return;
+    const next = !subscribed;
+    setPendingSubscribed(next);
+    setSubscriptionFailed(false);
+    try {
+      await setPickSubscriptionFn({ data: { subscribed: next } });
+      await router.invalidate();
+    } catch {
+      setSubscriptionFailed(true);
+    } finally {
+      setPendingSubscribed(null);
+    }
   }
 
   async function submit(confirmResubmit: boolean) {
@@ -175,22 +190,33 @@ function PoolPage() {
       )}
 
       <div className="pick-dm">
-        <div>
-          <p className="pick-dm__status" data-subscribed={subscribed}>
-            {subscribed ? 'Subscribed' : 'Not subscribed'}
-          </p>
-          <p className="pick-dm__text">
-            Get a Discord DM when each week&rsquo;s article is picked.
+        <div className="pick-dm__copy">
+          <label className="pick-dm__label" htmlFor="pick-dm-switch">
+            DM me the weekly pick
+          </label>
+          <p className="pick-dm__hint" id="pick-dm-hint">
+            The bot sends you the winning article when voting closes.
           </p>
         </div>
+        <span className="pick-dm__state" data-on={dmOn} aria-hidden="true">
+          {dmOn ? 'On' : 'Off'}
+        </span>
         <button
+          id="pick-dm-switch"
           type="button"
-          className={`btn ${subscribed ? 'btn-ghost' : 'btn-secondary'}`}
+          role="switch"
+          aria-checked={dmOn}
+          aria-describedby="pick-dm-hint"
+          className="switch"
           onClick={toggleSubscription}
         >
-          {subscribed ? 'Unsubscribe' : 'Subscribe'}
+          <span className="switch__knob" />
         </button>
       </div>
+
+      {subscriptionFailed ? (
+        <p className="form-error">That didn&rsquo;t save. Try again.</p>
+      ) : null}
 
       <div className="section-head">
         <h2>Past picks</h2>
