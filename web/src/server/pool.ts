@@ -23,12 +23,20 @@ export function sortPoolByVotes(
 
 export const getPoolFn = createServerFn({ method: 'GET' }).handler(async () => {
   const member = await requireMemberFn();
-  const { getActivePool, getVoteCountsAllTime, getUserVoteForWeek } =
-    await import('../../../src/db/book-club-picks');
+  const {
+    getActivePool,
+    getVoteCountsAllTime,
+    getUserVoteForWeek,
+    isPickSubscriber,
+  } = await import('../../../src/db/book-club-picks');
   const rows = sortPoolByVotes(getActivePool(), getVoteCountsAllTime());
   const currentVote = getUserVoteForWeek(
     member.userId,
     getCurrentVotingPeriod()
   );
-  return { rows, currentVoteId: currentVote?.submissionId ?? null };
+  return {
+    rows,
+    currentVoteId: currentVote?.submissionId ?? null,
+    subscribed: isPickSubscriber(member.userId),
+  };
 });

@@ -25,6 +25,7 @@ import {
   addPickSubscriber,
   removePickSubscriber,
   getPickSubscriberIds,
+  isPickSubscriber,
 } from '../db/book-club-picks';
 import {
   normalizeUrl,
@@ -572,6 +573,13 @@ describe('book club pick subscribers', () => {
     removePickSubscriber('user1');
 
     expect(getPickSubscriberIds()).toEqual(['user2']);
+  });
+
+  test('isPickSubscriber is true only for a subscribed user', () => {
+    addPickSubscriber('user1');
+
+    expect(isPickSubscriber('user1')).toBe(true);
+    expect(isPickSubscriber('user2')).toBe(false);
   });
 
   describe('notifyPickSubscribers', () => {

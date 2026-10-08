@@ -235,3 +235,13 @@ export function getPickSubscriberIds() {
     .all()
     .map((subscriber) => subscriber.userId);
 }
+
+export function isPickSubscriber(userId: string) {
+  return (
+    db
+      .select({ id: bookClubPickSubscribers.id })
+      .from(bookClubPickSubscribers)
+      .where(eq(bookClubPickSubscribers.userId, userId))
+      .get() != null
+  );
+}

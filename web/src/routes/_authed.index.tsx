@@ -3,6 +3,7 @@ import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { getPoolFn } from '../server/pool';
 import { castVoteFn } from '../server/vote';
 import { submitArticleFn } from '../server/submit';
+import { setPickSubscriptionFn } from '../server/pick-subscription';
 
 export const Route = createFileRoute('/_authed/')({
   loader: () => getPoolFn(),
@@ -10,7 +11,7 @@ export const Route = createFileRoute('/_authed/')({
 });
 
 function PoolPage() {
-  const { rows, currentVoteId } = Route.useLoaderData();
+  const { rows, currentVoteId, subscribed } = Route.useLoaderData();
   const router = useRouter();
 
   const [url, setUrl] = useState('');
@@ -23,6 +24,11 @@ function PoolPage() {
 
   async function vote(submissionId: number) {
     await castVoteFn({ data: { submissionId } });
+    await router.invalidate();
+  }
+
+  async function toggleSubscription() {
+    await setPickSubscriptionFn({ data: { subscribed: !subscribed } });
     await router.invalidate();
   }
 
@@ -167,6 +173,24 @@ function PoolPage() {
           })}
         </ul>
       )}
+
+      <div className="pick-dm">
+        <div>
+          <p className="pick-dm__status" data-subscribed={subscribed}>
+            {subscribed ? 'Subscribed' : 'Not subscribed'}
+          </p>
+          <p className="pick-dm__text">
+            Get a Discord DM when each week&rsquo;s article is picked.
+          </p>
+        </div>
+        <button
+          type="button"
+          className={`btn ${subscribed ? 'btn-ghost' : 'btn-secondary'}`}
+          onClick={toggleSubscription}
+        >
+          {subscribed ? 'Unsubscribe' : 'Subscribe'}
+        </button>
+      </div>
 
       <div className="section-head">
         <h2>Past picks</h2>
